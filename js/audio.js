@@ -36,30 +36,35 @@ class JungleAudioEngine {
 
     const unlock = () => {
       this.init();
-      if (this.musicEnabled && this.bgMusic && this.bgMusic.paused) {
-        try {
-          const p = this.bgMusic.play();
-          if (p !== undefined && typeof p.then === "function") {
-            p.then(() => {
-              this.updateBtnText();
-              cleanup();
-            }).catch(() => {});
-          }
-        } catch (e) {}
-      } else if (this.bgMusic && !this.bgMusic.paused) {
-        cleanup();
+      if (this.musicEnabled && this.bgMusic) {
+        this.bgMusic.muted = false;
+        if (this.bgMusic.paused) {
+          try {
+            const p = this.bgMusic.play();
+            if (p !== undefined && typeof p.then === "function") {
+              p.then(() => {
+                this.updateBtnText();
+                cleanup();
+              }).catch(() => {});
+            }
+          } catch (e) {}
+        } else {
+          cleanup();
+        }
       }
     };
 
     const cleanup = () => {
       this._unlockerArmed = false;
       window.removeEventListener("pointerdown", unlock, true);
+      window.removeEventListener("touchstart", unlock, true);
       window.removeEventListener("touchend", unlock, true);
       window.removeEventListener("click", unlock, true);
       window.removeEventListener("keydown", unlock, true);
     };
 
     window.addEventListener("pointerdown", unlock, true);
+    window.addEventListener("touchstart", unlock, { capture: true, passive: true });
     window.addEventListener("touchend", unlock, true);
     window.addEventListener("click", unlock, true);
     window.addEventListener("keydown", unlock, true);
@@ -113,6 +118,8 @@ class JungleAudioEngine {
     if (!this.musicEnabled) return;
     this.init();
     if (this.bgMusic && typeof this.bgMusic.play === "function") {
+      this.bgMusic.muted = false;
+      this.bgMusic.volume = 0.8;
       try {
         const p = this.bgMusic.play();
         if (p !== undefined && typeof p.then === "function") {
