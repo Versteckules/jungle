@@ -176,9 +176,39 @@
               Du hast die 3.000 Meter Dschungel bezwungen! Vor dir ragt das heilige Maya-Kryptex. Entschlüssele die 3 Steinringe, um die Koordinaten zu befreien:
             </p>
 
+            <!-- AUTOREN-SCHATZKAMMER / INVENTAR AM ALTAR -->
+            <div id="altar-relic-inventory" class="altar-relic-inventory">
+              <div class="inventory-title">🏆 DEINE GEBORGENEN AUTOREN-RELIKTE:</div>
+              <div class="inventory-slots">
+                <div class="inv-slot" id="inv-slot-0">
+                  <div class="inv-slot-icon">🪖</div>
+                  <div class="inv-slot-info">
+                    <span class="inv-slot-name">Tropenhelm</span>
+                    <span class="inv-slot-status" id="inv-status-0">❓ Verborgen</span>
+                  </div>
+                </div>
+                <div class="inv-slot" id="inv-slot-1">
+                  <div class="inv-slot-icon">🧿</div>
+                  <div class="inv-slot-info">
+                    <span class="inv-slot-name">Sonnen-Amulett</span>
+                    <span class="inv-slot-status" id="inv-status-1">❓ Verborgen</span>
+                  </div>
+                </div>
+                <div class="inv-slot" id="inv-slot-2">
+                  <div class="inv-slot-icon">🪝</div>
+                  <div class="inv-slot-info">
+                    <span class="inv-slot-name">Angelhaken</span>
+                    <span class="inv-slot-status" id="inv-status-2">❓ Verborgen</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="cryptex-riddle-box" id="cryptex-riddle-box">
-              <span class="riddle-title">📜 HEILIGES MAYA-RÄTSEL AM ALTAR:</span>
-              <p class="riddle-text">"Der kühne Affe (🐒) eilt unter der ewigen Sonne (☀️) zum heiligen Tempel (🏛️)."</p>
+              <span class="riddle-title" id="riddle-title">📜 HEILIGES MAYA-RÄTSEL AM ALTAR:</span>
+              <div class="riddle-text" id="riddle-text">
+                <!-- Dynamisch erzeugt basierend auf gesammelten Relikten -->
+              </div>
             </div>
           </div>
 

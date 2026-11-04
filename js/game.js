@@ -270,6 +270,28 @@
     }, 2500);
   }
 
+  // Physikalische Plattformabfrage für rollende Fässer & dynamische Elemente
+  function getGroundYAt(x) {
+    for (let i = 0; i < chunks.length; i++) {
+      const c = chunks[i];
+      if (x >= c.x - 80 && x <= c.x + c.width + 80) {
+        for (let j = 0; j < c.platforms.length; j++) {
+          const p = c.platforms[j];
+          if (p.isLooping || (p.isBridge && (p.dropY || 0) > 26)) continue;
+          if (p.isSlope) {
+            if (x >= p.x && x <= p.endX) {
+              const ratio = (x - p.x) / (p.endX - p.x);
+              return p.y + ratio * (p.endY - p.y);
+            }
+          } else if (x >= p.x && x <= p.x + p.width) {
+            return p.y + (p.dropY || 0);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   function updateLivesHUD() {
     for (let i = 0; i < 3; i++) {
       if (i < lives) {
@@ -483,14 +505,17 @@
               type: "thorns_bush"
             });
           } else {
+            const isBarrel = Math.random() < 0.5;
             enemies.push({
-              type: Math.random() < 0.5 ? "toucan" : "rolling_barrel",
+              type: isBarrel ? "rolling_barrel" : "toucan",
               x: startX + plat1W + gapW + plat2W * 0.65,
-              y: groundY - 58,
-              baseY: groundY - 58,
-              vx: -80,
+              y: isBarrel ? groundY - 20 : groundY - 58,
+              baseY: isBarrel ? groundY - 20 : groundY - 58,
+              vx: isBarrel ? -95 : -80,
               width: 42,
-              height: 32,
+              height: isBarrel ? 40 : 32,
+              radius: 20,
+              vy: 0,
               stomped: false,
               defeated: false
             });
@@ -2324,6 +2349,20 @@
       } else if (e.type === "rolling_barrel") {
         e.x += (e.vx || -90) * dt;
         e.rot = (e.rot || 0) - 5.5 * dt;
+
+        // Echte Bodenhaftung & Schwerkraft (verhindert Schweben in der Luft!)
+        const groundUnder = getGroundYAt(e.x);
+        if (groundUnder !== null && (e.y + 20) >= groundUnder - 14 && (e.y + 20) <= groundUnder + 35) {
+          e.y = groundUnder - 20; // Bündig auf der Plattform
+          e.vy = 0;
+        } else {
+          // Im freien Fall über Abgründen:
+          e.vy = (e.vy || 0) + 1100 * dt;
+          e.y += e.vy * dt;
+          if (e.y > WORLD_GROUND_Y + 180) {
+            e.defeated = true;
+          }
+        }
       } else if (e.type === "piranha") {
         const prevY = e.y;
         e.y = e.baseY - Math.abs(Math.sin(e.phase * 0.65)) * 185;
@@ -2480,6 +2519,7 @@
         graphics.impactFlash = 0.08;
         graphics.emitSparks(r.x, r.y, 24);
 
+        const countFound = discoveredGlyphs.filter(Boolean).length;
         const hudBadge = document.getElementById("relic-hud-" + r.id);
         if (hudBadge) {
           hudBadge.classList.remove("locked");
@@ -2488,8 +2528,8 @@
         }
 
         triggerTrick(`RELIKT: ${r.shortName}!`, 1000);
-        showActionPopup(`🔓 KRYPTEX-RING ${r.ringIndex + 1}: ${r.glyph} (${r.glyphName})!`);
-        showSpeechBubble(`RING ${r.ringIndex + 1}: ${r.glyph}! ☀️`, 2.2);
+        showActionPopup(`🏆 RELIKT ${countFound}/3: ${r.shortName}! Symbol aufgedeckt: ${r.glyph} (${r.glyphName})`);
+        showSpeechBubble(`${r.shortName}! ${r.glyph}✨`, 2.5);
       }
     }
 
@@ -2504,6 +2544,7 @@
         graphics.impactFlash = 0.08;
         graphics.emitSparks(s.x, s.y - 30, 22);
 
+        const countFound = discoveredGlyphs.filter(Boolean).length;
         const badgeMap = ["helmet", "amulet", "hook"];
         const id = badgeMap[s.ringIndex];
         const hudBadge = document.getElementById("relic-hud-" + id);
@@ -2514,8 +2555,8 @@
         }
 
         triggerTrick(`MAYA-STELE: ${s.glyph}!`, 600);
-        showActionPopup(`🗿 MAYA-STELE: RING ${s.ringIndex + 1} = ${s.glyph} (${s.name})!`);
-        showSpeechBubble(`SYMBOL ${s.ringIndex + 1}: ${s.glyph}! 🗿✨`, 2.2);
+        showActionPopup(`🗿 MAYA-STELE (${countFound}/3): Symbol aufgedeckt: ${s.glyph} (${s.name})`);
+        showSpeechBubble(`STELE: ${s.glyph}! 🗿✨`, 2.5);
       }
     }
 
@@ -2850,19 +2891,26 @@
       if (curEl) curEl.innerText = CRYPTEX_GLYPHS[curIdx].char;
       if (nextEl) nextEl.innerText = CRYPTEX_GLYPHS[nextIdx].char;
 
-      // Hinweis-Tag aktualisieren (falls Relikt oder Stele gesammelt wurde, Glyphe anzeigen)
+      // Hinweis-Tag und Ring-Glanz aktualisieren
       const clueEl = document.getElementById(`ring-clue-${r}`);
-      if (clueEl) {
-        const relicForRing = RELICS.find(rel => rel.ringIndex === r);
-        const icon = relicForRing ? relicForRing.icon : "🪖";
-        const glyphChar = CRYPTEX_GLYPHS[CRYPTEX_SOLUTION[r]].char;
-        if (discoveredGlyphs[r]) {
+      const relicForRing = RELICS.find(rel => rel.ringIndex === r);
+      const icon = relicForRing ? relicForRing.icon : "🪖";
+      const glyphChar = CRYPTEX_GLYPHS[CRYPTEX_SOLUTION[r]].char;
+
+      if (discoveredGlyphs[r]) {
+        if (clueEl) {
           clueEl.classList.add("revealed");
           clueEl.innerText = `✓ ${icon} ${glyphChar}`;
-        } else {
+        }
+        ringEl.style.borderColor = "#facc15";
+        ringEl.style.boxShadow = "0 0 16px rgba(250, 204, 21, 0.45)";
+      } else {
+        if (clueEl) {
           clueEl.classList.remove("revealed");
           clueEl.innerText = `${icon} ?`;
         }
+        ringEl.style.borderColor = "";
+        ringEl.style.boxShadow = "";
       }
     }
   }
@@ -2881,6 +2929,69 @@
     if (stage) stage.style.display = "block";
     if (reveal) reveal.style.display = "none";
 
+    const allFound = discoveredGlyphs[0] && discoveredGlyphs[1] && discoveredGlyphs[2];
+    const foundCount = discoveredGlyphs.filter(Boolean).length;
+
+    // 1. Altar-Inventar der Autoren aktualisieren
+    for (let r = 0; r < 3; r++) {
+      const slotEl = document.getElementById(`inv-slot-${r}`);
+      const statusEl = document.getElementById(`inv-status-${r}`);
+      const relic = RELICS[r];
+      const glyphChar = CRYPTEX_GLYPHS[CRYPTEX_SOLUTION[r]].char;
+
+      if (discoveredGlyphs[r]) {
+        if (slotEl) slotEl.classList.add("found");
+        if (statusEl) statusEl.innerHTML = `✓ Entschlüsselt: <b>${glyphChar}</b>`;
+        // Gefundene Ringe direkt auf die Lösung setzen!
+        cryptexRings[r] = CRYPTEX_SOLUTION[r];
+      } else {
+        if (slotEl) slotEl.classList.remove("found");
+        if (statusEl) statusEl.innerHTML = `❓ Im Dschungel verpasst`;
+      }
+    }
+
+    // 2. Dynamisches Maya-Rätsel / Inschrift aktualisieren
+    const riddleTitleEl = document.getElementById("riddle-title");
+    const riddleTextEl = document.getElementById("riddle-text");
+    const btnUnlock = document.getElementById("btn-unlock-cryptex");
+
+    if (allFound) {
+      if (riddleTitleEl) riddleTitleEl.innerText = "✨ ALLE 3 AUTOREN-RELIKTE GEBORGEN! ✨";
+      if (riddleTextEl) {
+        riddleTextEl.innerHTML = `
+          <div class="riddle-complete-msg">
+            🏆 <b>Perfekte Expedition!</b> Du hast alle 3 Relikte geborgen.<br>
+            Das Maya-Kryptex hat sich auf <b>🐒 – ☀️ – 🏛️</b> ausgerichtet!
+          </div>
+        `;
+      }
+      if (btnUnlock) {
+        btnUnlock.innerText = "✨ ALLES GEBORGEN: KRYPTEX ÖFFNEN (1 KLICK) 🔓";
+      }
+    } else {
+      if (riddleTitleEl) riddleTitleEl.innerText = `📜 MAYA-INSCHRIFT (${foundCount}/3 RELIKTE GEBORGEN):`;
+      if (riddleTextEl) {
+        let versesHtml = "";
+        for (let r = 0; r < 3; r++) {
+          const v = (typeof CRYPTEX_VERSES !== "undefined" && CRYPTEX_VERSES[r]) ? CRYPTEX_VERSES[r] : {
+            relicName: RELICS[r].name,
+            glyphChar: CRYPTEX_GLYPHS[CRYPTEX_SOLUTION[r]].char,
+            verse: `Ring ${r + 1}: Erforsche die Glyphen der Maya.`
+          };
+          if (discoveredGlyphs[r]) {
+            versesHtml += `<div class="riddle-verse-item solved">✓ <b>${v.relicName}</b> gefunden ➔ Symbol: <b>${v.glyphChar}</b></div>`;
+          } else {
+            versesHtml += `<div class="riddle-verse-item">❓ <b>${v.verse}</b></div>`;
+          }
+        }
+        riddleTextEl.innerHTML = versesHtml;
+      }
+      if (btnUnlock) {
+        btnUnlock.innerText = "⚡ KRYPTEX ENTSCHLÜSSELN ⚡";
+      }
+    }
+
+    // 3. Statuszeile und Orakel
     for (let r = 0; r < 3; r++) {
       const ringEl = document.getElementById(`ring-${r}`);
       if (ringEl) {
@@ -2891,9 +3002,13 @@
     const hintEl = document.querySelector(".cryptex-hint");
     if (hintEl) {
       hintEl.style.color = "";
-      hintEl.innerText = (failedCryptexAttempts >= 3 && !cryptexUnlocked)
-        ? "🔮 Orakel-Hilfe unten bereit oder Ringe weiter drehen"
-        : "👆 Tippe auf die Pfeile oder Ringe zum Drehen";
+      if (allFound) {
+        hintEl.innerText = "✨ Ringe perfekt ausgerichtet – 1 Klick zum Öffnen!";
+      } else {
+        hintEl.innerText = (failedCryptexAttempts >= 3 && !cryptexUnlocked)
+          ? "🔮 Orakel-Hilfe unten bereit oder Ringe weiter drehen"
+          : "👆 Drehe die noch fehlenden Ringe passend zum Rätselvers";
+      }
     }
 
     const oracleBtn = document.getElementById("btn-oracle-help");

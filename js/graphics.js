@@ -853,11 +853,49 @@ class JungleGraphicsEngine {
     ctx.restore();
   }
 
-  // --- 5. DONKEY KONG TIKI-FASS-KANONEN MIT 3D-ZYLINDER-EFFEKT ---
+  // --- 5. DONKEY KONG TIKI-FASS-KANONEN MIT 3D-ZYLINDER-EFFEKT & LIANEN-VERANKERUNG ---
   drawBarrels(barrels, player) {
     const ctx = this.ctx;
 
     for (let b of barrels) {
+      // Stabile Dschungel-Lianen / Hänge-Seile nach oben in die Baumkronen (verhindert freies Schweben im Nichts!)
+      ctx.save();
+      ctx.strokeStyle = "#451a03";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(b.x - b.radius * 0.65, b.y - b.radius * 0.5);
+      ctx.bezierCurveTo(b.x - b.radius * 0.9, b.y - 120, b.x - b.radius * 0.4, b.y - 260, b.x - b.radius * 0.7, -400);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(b.x + b.radius * 0.65, b.y - b.radius * 0.5);
+      ctx.bezierCurveTo(b.x + b.radius * 0.9, b.y - 120, b.x + b.radius * 0.4, b.y - 260, b.x + b.radius * 0.7, -400);
+      ctx.stroke();
+
+      // Grüne Dschungel-Schlingblätter an den Seilen
+      ctx.strokeStyle = "#16a34a";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(b.x - b.radius * 0.65, b.y - 65);
+      ctx.lineTo(b.x - b.radius * 0.65 - 10, b.y - 80);
+      ctx.moveTo(b.x + b.radius * 0.65, b.y - 95);
+      ctx.lineTo(b.x + b.radius * 0.65 + 11, b.y - 110);
+      ctx.stroke();
+
+      // Hölzerner Haltebügel über dem Fass
+      ctx.fillStyle = "#78350f";
+      ctx.strokeStyle = "#1e0a02";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(b.x - b.radius * 0.95, b.y - b.radius * 0.9 - 6, b.radius * 1.9, 8, 4);
+      } else {
+        ctx.rect(b.x - b.radius * 0.95, b.y - b.radius * 0.9 - 6, b.radius * 1.9, 8);
+      }
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.rotate(b.angle);
@@ -3186,9 +3224,16 @@ class JungleGraphicsEngine {
         ctx.arc(-8.5, -3, 1.6, 0, Math.PI * 2);
         ctx.fill();
       } else if (e.type === "rolling_barrel") {
+        const r = e.radius || 20;
+
+        // Statischer Kontaktschatten auf dem Boden (bleibt horizontal)
+        ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
+        ctx.beginPath();
+        ctx.ellipse(0, r - 1, r * 0.85, 3.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
         // Rollendes Tiki-Holzfass (Kopf-Bounce oder Überspringen!)
         ctx.rotate(e.rot || 0);
-        const r = e.radius || 20;
         const bGrad = ctx.createRadialGradient(-4, -4, 2, 0, 0, r);
         bGrad.addColorStop(0, "#d97706");
         bGrad.addColorStop(0.65, "#92400e");

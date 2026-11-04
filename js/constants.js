@@ -204,7 +204,34 @@ const RELICS = [
 
 // Die exakte, geheime Maya-Kryptex Lösung: [Ring 1 = 🐒, Ring 2 = ☀️, Ring 3 = 🏛️]
 const CRYPTEX_SOLUTION = [2, 0, 5];
-const CRYPTEX_RIDDLE = "Der kühne Affe (🐒) eilt unter der ewigen Sonne (☀️) zum heiligen Tempel (🏛️).";
+
+// Poetische Maya-Verse für ungelöste Ringe (Kryptisches Rätsel ohne direkte Spoiler-Emojis)
+const CRYPTEX_VERSES = [
+  {
+    ring: 0,
+    relicName: "Versteckules' Tropenhelm",
+    glyphChar: "🐒",
+    glyphName: "Batz (Affe 🐒)",
+    solvedText: "Ring 1: Der flinke Schwingende der Baumkronen (🐒) wurde durch den Tropenhelm offenbart!",
+    verse: "Ring 1: Suche den flinken Herrscher der Wipfel – den Urvater aller Affen, der mit Koko durch die Lianen schwingt."
+  },
+  {
+    ring: 1,
+    relicName: "Tschangos Sonnen-Amulett",
+    glyphChar: "☀️",
+    glyphName: "Kinich (Sonne ☀️)",
+    solvedText: "Ring 2: Das heilige Himmelsauge der Maya (☀️) erstrahlt durch Tschangos Amulett!",
+    verse: "Ring 2: Suche die ewige Himmelsmacht – das flammende Feuer über dem Dschungeldach, das den Göttern Kraft schenkt."
+  },
+  {
+    ring: 2,
+    relicName: "Heiliger Angelhaken",
+    glyphChar: "🏛️",
+    glyphName: "Pop (Tempel 🏛️)",
+    solvedText: "Ring 3: Die geheime Stufenpyramide (🏛️) wurde durch den Angelhaken geweiht!",
+    verse: "Ring 3: Suche das steinerne Heiligtum der Ahnen – die uralte Maya-Pyramide, in der das Finale verborgen liegt."
+  }
+];
 
 // Tödliche herabfallende Kokosnüsse (Gefahr aus den Baumkronen)
 const COCONUT_CONFIG = {
