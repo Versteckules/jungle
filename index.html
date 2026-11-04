@@ -127,10 +127,10 @@
       <div class="hud-stats-row">
         <div id="score-counter-hud">⭐ <span id="score-count">0</span></div>
         <div id="banana-counter-hud">🍌 <span id="banana-count">0</span></div>
-        <div id="relics-hud" title="3 Versteckte Autoren-Relikte">
-          <span id="relic-hud-helmet" class="relic-badge locked" title="Versteckules' Tropenhelm (520m)">🪖</span>
-          <span id="relic-hud-amulet" class="relic-badge locked" title="Tschangos Sonnen-Amulett (1450m)">🧿</span>
-          <span id="relic-hud-hook" class="relic-badge locked" title="Heiliger Angelhaken (2280m)">🪝</span>
+        <div id="relics-hud" title="Kryptex-Symbole (3 Autoren-Relikte &amp; Maya-Stelen)">
+          <span id="relic-hud-helmet" class="relic-badge locked" title="Ring 1: 🐒 (Versteckules' Tropenhelm / Stele)">🪖 ?</span>
+          <span id="relic-hud-amulet" class="relic-badge locked" title="Ring 2: ☀️ (Tschangos Sonnen-Amulett / Stele)">🧿 ?</span>
+          <span id="relic-hud-hook" class="relic-badge locked" title="Ring 3: 🏛️ (Heiliger Angelhaken / Stele)">🪝 ?</span>
         </div>
       </div>
       <div id="zone-badge">🌅 ZONE 1: SONNEN-URWALD</div>
@@ -175,10 +175,16 @@
             <p class="modal-desc" style="max-width:380px;">
               Du hast die 3.000 Meter Dschungel bezwungen! Vor dir ragt das heilige Maya-Kryptex. Entschlüssele die 3 Steinringe, um die Koordinaten zu befreien:
             </p>
+
+            <div class="cryptex-riddle-box" id="cryptex-riddle-box">
+              <span class="riddle-title">📜 HEILIGES MAYA-RÄTSEL AM ALTAR:</span>
+              <p class="riddle-text">"Der kühne Affe (🐒) eilt unter der ewigen Sonne (☀️) zum heiligen Tempel (🏛️)."</p>
+            </div>
           </div>
 
           <div class="cryptex-cylinder">
             <div class="cryptex-ring" id="ring-0" data-ring="0">
+              <div class="ring-clue-tag" id="ring-clue-0">🪖 ?</div>
               <button class="ring-btn btn-up" type="button" aria-label="Ring 1 nach oben">▲</button>
               <div class="ring-viewport">
                 <div class="glyph-item glyph-prev">🐆</div>
@@ -189,6 +195,7 @@
             </div>
 
             <div class="cryptex-ring" id="ring-1" data-ring="1">
+              <div class="ring-clue-tag" id="ring-clue-1">🧿 ?</div>
               <button class="ring-btn btn-up" type="button" aria-label="Ring 2 nach oben">▲</button>
               <div class="ring-viewport">
                 <div class="glyph-item glyph-prev">🐍</div>
@@ -199,6 +206,7 @@
             </div>
 
             <div class="cryptex-ring" id="ring-2" data-ring="2">
+              <div class="ring-clue-tag" id="ring-clue-2">🪝 ?</div>
               <button class="ring-btn btn-up" type="button" aria-label="Ring 3 nach oben">▲</button>
               <div class="ring-viewport">
                 <div class="glyph-item glyph-prev">🏛️</div>
@@ -211,6 +219,7 @@
 
           <p class="cryptex-hint">👆 Tippe auf die Pfeile oder Ringe zum Drehen</p>
           <button id="btn-unlock-cryptex" class="btn-modal btn-altar-pulse" type="button">⚡ KRYPTEX ENTSCHLÜSSELN ⚡</button>
+          <button id="btn-oracle-help" class="btn-modal btn-oracle-pulse" style="display:none;margin-top:10px;background:linear-gradient(135deg, #8b5cf6, #6366f1);box-shadow:0 6px 20px rgba(139, 92, 246, 0.5);" type="button">🔮 ORAKEL DER MAYA BEFRAGEN (LÖSUNG)</button>
         </div>
 
         <!-- PHASE 2: GEHEIME FINAL-KOORDINATEN & OFFIZIELLER STEMPEL (ERSCHEINT NACH ENTSCHLÜSSELUNG) -->

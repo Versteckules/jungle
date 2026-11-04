@@ -84,6 +84,25 @@ class JungleGraphicsEngine {
     }
   }
 
+  emitCoconutShatter(x, y) {
+    this.impactFlash = 0.06;
+    for (let i = 0; i < 14; i++) {
+      if (this.sparks.length >= GAME_CONFIG.MAX_SPARKS) this.sparks.shift();
+      const angle = (Math.random() * Math.PI) + Math.PI; // Nach oben spritzend
+      const speed = 130 + Math.random() * 280;
+      this.sparks.push({
+        x: x + (Math.random() - 0.5) * 16,
+        y: y - 4,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed * 0.8,
+        life: 0.35 + Math.random() * 0.25,
+        maxLife: 0.5,
+        size: 3.0 + Math.random() * 3.5,
+        color: i % 3 === 0 ? "#ffffff" : (i % 2 === 0 ? "#78350f" : "#451a03")
+      });
+    }
+  }
+
   triggerLightning() {
     this.lightningFlash = 0.24;
   }
@@ -912,6 +931,99 @@ class JungleGraphicsEngine {
     }
   }
 
+
+  // --- TÖDLICHE HERABFALLENDE KOKOSNÜSSE MIT BODEN-WARNUNG ---
+  drawFallingCoconuts(coconuts) {
+    if (!coconuts || !coconuts.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let c of coconuts) {
+      if (c.shattered) continue;
+
+      // 1. Roter Warn-Schatten / Ziel-Retikel am Boden
+      ctx.save();
+      const warnRatio = Math.max(0, Math.min(1, 1 - (c.targetY - c.y) / 460));
+      const pulse = Math.sin(now * 0.02) * 2;
+      ctx.translate(c.targetX, c.targetY);
+
+      // Rote pulsierende Gefahrenzone
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.22 + warnRatio * 0.45})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + warnRatio * 0.4})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + pulse, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Schrumpfender Countdown-Zielring
+      const shrinkRadius = Math.max(0, (1 - warnRatio) * 36);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + shrinkRadius, 7.5 + shrinkRadius * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Warn-Icon "⚠️" solange noch im Anflug
+      if (warnRatio < 0.88) {
+        ctx.font = "900 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#facc15";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText("⚠️", 0, -14);
+        ctx.fillText("⚠️", 0, -14);
+      }
+      ctx.restore();
+
+      // 2. Die herabstürzende Kokosnuss
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation || (now * 0.008));
+
+      // Dunkelbraune Kokos-Schale
+      const nutGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+      nutGrad.addColorStop(0, "#a16207");
+      nutGrad.addColorStop(0.4, "#78350f");
+      nutGrad.addColorStop(0.85, "#451a03");
+      nutGrad.addColorStop(1, "#1c0b02");
+      ctx.fillStyle = nutGrad;
+      ctx.strokeStyle = "#1c0b02";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 15, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Faserige Rillen
+      ctx.strokeStyle = "rgba(180, 83, 9, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, -0.6, 0.6);
+      ctx.arc(0, 0, 11, Math.PI - 0.6, Math.PI + 0.6);
+      ctx.stroke();
+
+      // 3 typische dunkle Kokosnuss-Augen
+      ctx.fillStyle = "#1c0b02";
+      [-4, 4].forEach(ex => {
+        ctx.beginPath();
+        ctx.arc(ex, -6, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, -1, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Weißer Glanzpunkt
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
   // --- 6. 3D-SCHATTIERTER HELD KOKO (PIXAR / VOLUMETRIC CARTOON ART) ---
   drawKoko(player, isSuperSonic, slowmoFactor) {
     const ctx = this.ctx;
@@ -1548,6 +1660,99 @@ class JungleGraphicsEngine {
     }
   }
 
+
+  // --- TÖDLICHE HERABFALLENDE KOKOSNÜSSE MIT BODEN-WARNUNG ---
+  drawFallingCoconuts(coconuts) {
+    if (!coconuts || !coconuts.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let c of coconuts) {
+      if (c.shattered) continue;
+
+      // 1. Roter Warn-Schatten / Ziel-Retikel am Boden
+      ctx.save();
+      const warnRatio = Math.max(0, Math.min(1, 1 - (c.targetY - c.y) / 460));
+      const pulse = Math.sin(now * 0.02) * 2;
+      ctx.translate(c.targetX, c.targetY);
+
+      // Rote pulsierende Gefahrenzone
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.22 + warnRatio * 0.45})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + warnRatio * 0.4})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + pulse, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Schrumpfender Countdown-Zielring
+      const shrinkRadius = Math.max(0, (1 - warnRatio) * 36);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + shrinkRadius, 7.5 + shrinkRadius * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Warn-Icon "⚠️" solange noch im Anflug
+      if (warnRatio < 0.88) {
+        ctx.font = "900 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#facc15";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText("⚠️", 0, -14);
+        ctx.fillText("⚠️", 0, -14);
+      }
+      ctx.restore();
+
+      // 2. Die herabstürzende Kokosnuss
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation || (now * 0.008));
+
+      // Dunkelbraune Kokos-Schale
+      const nutGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+      nutGrad.addColorStop(0, "#a16207");
+      nutGrad.addColorStop(0.4, "#78350f");
+      nutGrad.addColorStop(0.85, "#451a03");
+      nutGrad.addColorStop(1, "#1c0b02");
+      ctx.fillStyle = nutGrad;
+      ctx.strokeStyle = "#1c0b02";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 15, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Faserige Rillen
+      ctx.strokeStyle = "rgba(180, 83, 9, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, -0.6, 0.6);
+      ctx.arc(0, 0, 11, Math.PI - 0.6, Math.PI + 0.6);
+      ctx.stroke();
+
+      // 3 typische dunkle Kokosnuss-Augen
+      ctx.fillStyle = "#1c0b02";
+      [-4, 4].forEach(ex => {
+        ctx.beginPath();
+        ctx.arc(ex, -6, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, -1, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Weißer Glanzpunkt
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
   // --- SICHTBARE HÄNGE-LIANEN MIT GOLDENEM GREIF-RING ---
   drawGrappleAnchors(grappleAnchors, player, hook) {
     if (!grappleAnchors || !grappleAnchors.length) return;
@@ -1743,6 +1948,99 @@ class JungleGraphicsEngine {
     }
   }
 
+
+  // --- TÖDLICHE HERABFALLENDE KOKOSNÜSSE MIT BODEN-WARNUNG ---
+  drawFallingCoconuts(coconuts) {
+    if (!coconuts || !coconuts.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let c of coconuts) {
+      if (c.shattered) continue;
+
+      // 1. Roter Warn-Schatten / Ziel-Retikel am Boden
+      ctx.save();
+      const warnRatio = Math.max(0, Math.min(1, 1 - (c.targetY - c.y) / 460));
+      const pulse = Math.sin(now * 0.02) * 2;
+      ctx.translate(c.targetX, c.targetY);
+
+      // Rote pulsierende Gefahrenzone
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.22 + warnRatio * 0.45})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + warnRatio * 0.4})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + pulse, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Schrumpfender Countdown-Zielring
+      const shrinkRadius = Math.max(0, (1 - warnRatio) * 36);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + shrinkRadius, 7.5 + shrinkRadius * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Warn-Icon "⚠️" solange noch im Anflug
+      if (warnRatio < 0.88) {
+        ctx.font = "900 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#facc15";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText("⚠️", 0, -14);
+        ctx.fillText("⚠️", 0, -14);
+      }
+      ctx.restore();
+
+      // 2. Die herabstürzende Kokosnuss
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation || (now * 0.008));
+
+      // Dunkelbraune Kokos-Schale
+      const nutGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+      nutGrad.addColorStop(0, "#a16207");
+      nutGrad.addColorStop(0.4, "#78350f");
+      nutGrad.addColorStop(0.85, "#451a03");
+      nutGrad.addColorStop(1, "#1c0b02");
+      ctx.fillStyle = nutGrad;
+      ctx.strokeStyle = "#1c0b02";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 15, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Faserige Rillen
+      ctx.strokeStyle = "rgba(180, 83, 9, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, -0.6, 0.6);
+      ctx.arc(0, 0, 11, Math.PI - 0.6, Math.PI + 0.6);
+      ctx.stroke();
+
+      // 3 typische dunkle Kokosnuss-Augen
+      ctx.fillStyle = "#1c0b02";
+      [-4, 4].forEach(ex => {
+        ctx.beginPath();
+        ctx.arc(ex, -6, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, -1, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Weißer Glanzpunkt
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
   // --- 7b. 3 LEGENDÄRE AUTOREN-RELIKTE (GEOCACHING EASTER EGGS) ---
   drawRelics(relics) {
     const ctx = this.ctx;
@@ -1784,6 +2082,16 @@ class JungleGraphicsEngine {
       ctx.textBaseline = "middle";
       ctx.fillText(r.icon, 0, 2);
 
+      // Glyphen-Hinweis über dem Relikt
+      if (r.glyph) {
+        ctx.font = "900 11px sans-serif";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText(`KRYPTEX: ${r.glyph}`, 0, -34);
+        ctx.fillStyle = "#fef08a";
+        ctx.fillText(`KRYPTEX: ${r.glyph}`, 0, -34);
+      }
+
       // Glitzersterne
       for (let s = 0; s < 4; s++) {
         const starAngle = (now * 0.003 + s * (Math.PI / 2)) % (Math.PI * 2);
@@ -1795,6 +2103,78 @@ class JungleGraphicsEngine {
         ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      ctx.restore();
+    }
+  }
+
+  // --- 7b2. WIEDERHOLTE MAYA-GLYPHEN-STELEN (ZUSÄTZLICHE KRYPTEX-CHANCEN) ---
+  drawMayaSteles(steles) {
+    if (!steles || !steles.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let s of steles) {
+      if (s.collected) continue;
+      ctx.save();
+      ctx.translate(s.x, s.y);
+
+      // 1. Sanfter Sonnen-Aura Glow am Boden
+      const glowGrad = ctx.createRadialGradient(0, -25, 6, 0, -25, 48);
+      glowGrad.addColorStop(0, "rgba(250, 204, 21, 0.55)");
+      glowGrad.addColorStop(0.5, "rgba(234, 179, 8, 0.25)");
+      glowGrad.addColorStop(1, "rgba(234, 179, 8, 0)");
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(0, -25, 48, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Antike gemeißelte Maya-Stele (Steinmonolith)
+      const steleGrad = ctx.createLinearGradient(-16, 0, 16, 0);
+      steleGrad.addColorStop(0, "#334155");
+      steleGrad.addColorStop(0.3, "#475569");
+      steleGrad.addColorStop(0.7, "#64748b");
+      steleGrad.addColorStop(1, "#1e293b");
+      ctx.fillStyle = steleGrad;
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 2.5;
+
+      ctx.beginPath();
+      ctx.moveTo(-16, 0);
+      ctx.lineTo(-14, -54);
+      ctx.quadraticCurveTo(0, -62, 14, -54);
+      ctx.lineTo(16, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Eingemeißelte Runenlinien
+      ctx.strokeStyle = "rgba(250, 204, 21, 0.65)";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(-8, -42); ctx.lineTo(8, -42);
+      ctx.moveTo(-10, -26); ctx.lineTo(10, -26);
+      ctx.moveTo(-6, -10); ctx.lineTo(6, -10);
+      ctx.stroke();
+
+      // 3. Schwebende, pulsierende Glyphe über der Stele
+      const floatY = -78 + Math.sin(now * 0.005 + s.x) * 6;
+      ctx.font = "900 24px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "#facc15";
+      ctx.shadowBlur = 12;
+      ctx.fillText(s.glyph, 0, floatY);
+      ctx.shadowBlur = 0;
+
+      // Beschriftung: "🗿 STELE" + Ring-Nummer
+      ctx.font = "900 10.5px sans-serif";
+      ctx.fillStyle = "#fef08a";
+      ctx.strokeStyle = "#1e0a02";
+      ctx.lineWidth = 2.8;
+      const label = `🗿 RING ${s.ringIndex + 1}`;
+      ctx.strokeText(label, 0, floatY - 20);
+      ctx.fillText(label, 0, floatY - 20);
 
       ctx.restore();
     }
@@ -1927,6 +2307,99 @@ class JungleGraphicsEngine {
         ctx.ellipse(0, 40, shockRadius, shockRadius * 0.35, 0, 0, Math.PI * 2);
         ctx.stroke();
       }
+      ctx.restore();
+    }
+  }
+
+
+  // --- TÖDLICHE HERABFALLENDE KOKOSNÜSSE MIT BODEN-WARNUNG ---
+  drawFallingCoconuts(coconuts) {
+    if (!coconuts || !coconuts.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let c of coconuts) {
+      if (c.shattered) continue;
+
+      // 1. Roter Warn-Schatten / Ziel-Retikel am Boden
+      ctx.save();
+      const warnRatio = Math.max(0, Math.min(1, 1 - (c.targetY - c.y) / 460));
+      const pulse = Math.sin(now * 0.02) * 2;
+      ctx.translate(c.targetX, c.targetY);
+
+      // Rote pulsierende Gefahrenzone
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.22 + warnRatio * 0.45})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + warnRatio * 0.4})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + pulse, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Schrumpfender Countdown-Zielring
+      const shrinkRadius = Math.max(0, (1 - warnRatio) * 36);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + shrinkRadius, 7.5 + shrinkRadius * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Warn-Icon "⚠️" solange noch im Anflug
+      if (warnRatio < 0.88) {
+        ctx.font = "900 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#facc15";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText("⚠️", 0, -14);
+        ctx.fillText("⚠️", 0, -14);
+      }
+      ctx.restore();
+
+      // 2. Die herabstürzende Kokosnuss
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation || (now * 0.008));
+
+      // Dunkelbraune Kokos-Schale
+      const nutGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+      nutGrad.addColorStop(0, "#a16207");
+      nutGrad.addColorStop(0.4, "#78350f");
+      nutGrad.addColorStop(0.85, "#451a03");
+      nutGrad.addColorStop(1, "#1c0b02");
+      ctx.fillStyle = nutGrad;
+      ctx.strokeStyle = "#1c0b02";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 15, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Faserige Rillen
+      ctx.strokeStyle = "rgba(180, 83, 9, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, -0.6, 0.6);
+      ctx.arc(0, 0, 11, Math.PI - 0.6, Math.PI + 0.6);
+      ctx.stroke();
+
+      // 3 typische dunkle Kokosnuss-Augen
+      ctx.fillStyle = "#1c0b02";
+      [-4, 4].forEach(ex => {
+        ctx.beginPath();
+        ctx.arc(ex, -6, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, -1, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Weißer Glanzpunkt
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     }
   }
@@ -2127,6 +2600,99 @@ class JungleGraphicsEngine {
         ctx.strokeText("🚡 SEILBAHN!", z.x1 + 24, z.y1 - 18);
         ctx.fillText("🚡 SEILBAHN!", z.x1 + 24, z.y1 - 18);
       }
+      ctx.restore();
+    }
+  }
+
+
+  // --- TÖDLICHE HERABFALLENDE KOKOSNÜSSE MIT BODEN-WARNUNG ---
+  drawFallingCoconuts(coconuts) {
+    if (!coconuts || !coconuts.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let c of coconuts) {
+      if (c.shattered) continue;
+
+      // 1. Roter Warn-Schatten / Ziel-Retikel am Boden
+      ctx.save();
+      const warnRatio = Math.max(0, Math.min(1, 1 - (c.targetY - c.y) / 460));
+      const pulse = Math.sin(now * 0.02) * 2;
+      ctx.translate(c.targetX, c.targetY);
+
+      // Rote pulsierende Gefahrenzone
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.22 + warnRatio * 0.45})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + warnRatio * 0.4})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + pulse, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Schrumpfender Countdown-Zielring
+      const shrinkRadius = Math.max(0, (1 - warnRatio) * 36);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + shrinkRadius, 7.5 + shrinkRadius * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Warn-Icon "⚠️" solange noch im Anflug
+      if (warnRatio < 0.88) {
+        ctx.font = "900 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#facc15";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText("⚠️", 0, -14);
+        ctx.fillText("⚠️", 0, -14);
+      }
+      ctx.restore();
+
+      // 2. Die herabstürzende Kokosnuss
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation || (now * 0.008));
+
+      // Dunkelbraune Kokos-Schale
+      const nutGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+      nutGrad.addColorStop(0, "#a16207");
+      nutGrad.addColorStop(0.4, "#78350f");
+      nutGrad.addColorStop(0.85, "#451a03");
+      nutGrad.addColorStop(1, "#1c0b02");
+      ctx.fillStyle = nutGrad;
+      ctx.strokeStyle = "#1c0b02";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 15, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Faserige Rillen
+      ctx.strokeStyle = "rgba(180, 83, 9, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, -0.6, 0.6);
+      ctx.arc(0, 0, 11, Math.PI - 0.6, Math.PI + 0.6);
+      ctx.stroke();
+
+      // 3 typische dunkle Kokosnuss-Augen
+      ctx.fillStyle = "#1c0b02";
+      [-4, 4].forEach(ex => {
+        ctx.beginPath();
+        ctx.arc(ex, -6, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, -1, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Weißer Glanzpunkt
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     }
   }
@@ -2465,6 +3031,99 @@ class JungleGraphicsEngine {
     }
   }
 
+
+  // --- TÖDLICHE HERABFALLENDE KOKOSNÜSSE MIT BODEN-WARNUNG ---
+  drawFallingCoconuts(coconuts) {
+    if (!coconuts || !coconuts.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let c of coconuts) {
+      if (c.shattered) continue;
+
+      // 1. Roter Warn-Schatten / Ziel-Retikel am Boden
+      ctx.save();
+      const warnRatio = Math.max(0, Math.min(1, 1 - (c.targetY - c.y) / 460));
+      const pulse = Math.sin(now * 0.02) * 2;
+      ctx.translate(c.targetX, c.targetY);
+
+      // Rote pulsierende Gefahrenzone
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.22 + warnRatio * 0.45})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + warnRatio * 0.4})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + pulse, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Schrumpfender Countdown-Zielring
+      const shrinkRadius = Math.max(0, (1 - warnRatio) * 36);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + shrinkRadius, 7.5 + shrinkRadius * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Warn-Icon "⚠️" solange noch im Anflug
+      if (warnRatio < 0.88) {
+        ctx.font = "900 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#facc15";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText("⚠️", 0, -14);
+        ctx.fillText("⚠️", 0, -14);
+      }
+      ctx.restore();
+
+      // 2. Die herabstürzende Kokosnuss
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation || (now * 0.008));
+
+      // Dunkelbraune Kokos-Schale
+      const nutGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+      nutGrad.addColorStop(0, "#a16207");
+      nutGrad.addColorStop(0.4, "#78350f");
+      nutGrad.addColorStop(0.85, "#451a03");
+      nutGrad.addColorStop(1, "#1c0b02");
+      ctx.fillStyle = nutGrad;
+      ctx.strokeStyle = "#1c0b02";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 15, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Faserige Rillen
+      ctx.strokeStyle = "rgba(180, 83, 9, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, -0.6, 0.6);
+      ctx.arc(0, 0, 11, Math.PI - 0.6, Math.PI + 0.6);
+      ctx.stroke();
+
+      // 3 typische dunkle Kokosnuss-Augen
+      ctx.fillStyle = "#1c0b02";
+      [-4, 4].forEach(ex => {
+        ctx.beginPath();
+        ctx.arc(ex, -6, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, -1, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Weißer Glanzpunkt
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
   drawEnemies(enemies) {
     if (!enemies || !enemies.length) return;
     const ctx = this.ctx;
@@ -2586,6 +3245,99 @@ class JungleGraphicsEngine {
     }
   }
 
+
+  // --- TÖDLICHE HERABFALLENDE KOKOSNÜSSE MIT BODEN-WARNUNG ---
+  drawFallingCoconuts(coconuts) {
+    if (!coconuts || !coconuts.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let c of coconuts) {
+      if (c.shattered) continue;
+
+      // 1. Roter Warn-Schatten / Ziel-Retikel am Boden
+      ctx.save();
+      const warnRatio = Math.max(0, Math.min(1, 1 - (c.targetY - c.y) / 460));
+      const pulse = Math.sin(now * 0.02) * 2;
+      ctx.translate(c.targetX, c.targetY);
+
+      // Rote pulsierende Gefahrenzone
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.22 + warnRatio * 0.45})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + warnRatio * 0.4})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + pulse, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Schrumpfender Countdown-Zielring
+      const shrinkRadius = Math.max(0, (1 - warnRatio) * 36);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + shrinkRadius, 7.5 + shrinkRadius * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Warn-Icon "⚠️" solange noch im Anflug
+      if (warnRatio < 0.88) {
+        ctx.font = "900 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#facc15";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText("⚠️", 0, -14);
+        ctx.fillText("⚠️", 0, -14);
+      }
+      ctx.restore();
+
+      // 2. Die herabstürzende Kokosnuss
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation || (now * 0.008));
+
+      // Dunkelbraune Kokos-Schale
+      const nutGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+      nutGrad.addColorStop(0, "#a16207");
+      nutGrad.addColorStop(0.4, "#78350f");
+      nutGrad.addColorStop(0.85, "#451a03");
+      nutGrad.addColorStop(1, "#1c0b02");
+      ctx.fillStyle = nutGrad;
+      ctx.strokeStyle = "#1c0b02";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 15, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Faserige Rillen
+      ctx.strokeStyle = "rgba(180, 83, 9, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, -0.6, 0.6);
+      ctx.arc(0, 0, 11, Math.PI - 0.6, Math.PI + 0.6);
+      ctx.stroke();
+
+      // 3 typische dunkle Kokosnuss-Augen
+      ctx.fillStyle = "#1c0b02";
+      [-4, 4].forEach(ex => {
+        ctx.beginPath();
+        ctx.arc(ex, -6, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, -1, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Weißer Glanzpunkt
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
   drawHazards(hazards) {
     const ctx = this.ctx;
     for (let h of hazards) {
@@ -2640,6 +3392,98 @@ class JungleGraphicsEngine {
         ctx.lineWidth = 2.5;
         ctx.stroke();
       }
+      ctx.restore();
+    }
+  }
+
+  // --- TÖDLICHE HERABFALLENDE KOKOSNÜSSE MIT BODEN-WARNUNG ---
+  drawFallingCoconuts(coconuts) {
+    if (!coconuts || !coconuts.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let c of coconuts) {
+      if (c.shattered) continue;
+
+      // 1. Roter Warn-Schatten / Ziel-Retikel am Boden
+      ctx.save();
+      const warnRatio = Math.max(0, Math.min(1, 1 - (c.targetY - c.y) / 460));
+      const pulse = Math.sin(now * 0.02) * 2;
+      ctx.translate(c.targetX, c.targetY);
+
+      // Rote pulsierende Gefahrenzone
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.22 + warnRatio * 0.45})`;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.6 + warnRatio * 0.4})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + pulse, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Schrumpfender Countdown-Zielring
+      const shrinkRadius = Math.max(0, (1 - warnRatio) * 36);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22 + shrinkRadius, 7.5 + shrinkRadius * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Warn-Icon "⚠️" solange noch im Anflug
+      if (warnRatio < 0.88) {
+        ctx.font = "900 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#facc15";
+        ctx.strokeStyle = "#1e0a02";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText("⚠️", 0, -14);
+        ctx.fillText("⚠️", 0, -14);
+      }
+      ctx.restore();
+
+      // 2. Die herabstürzende Kokosnuss
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation || (now * 0.008));
+
+      // Dunkelbraune Kokos-Schale
+      const nutGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+      nutGrad.addColorStop(0, "#a16207");
+      nutGrad.addColorStop(0.4, "#78350f");
+      nutGrad.addColorStop(0.85, "#451a03");
+      nutGrad.addColorStop(1, "#1c0b02");
+      ctx.fillStyle = nutGrad;
+      ctx.strokeStyle = "#1c0b02";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 15, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Faserige Rillen
+      ctx.strokeStyle = "rgba(180, 83, 9, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, -0.6, 0.6);
+      ctx.arc(0, 0, 11, Math.PI - 0.6, Math.PI + 0.6);
+      ctx.stroke();
+
+      // 3 typische dunkle Kokosnuss-Augen
+      ctx.fillStyle = "#1c0b02";
+      [-4, 4].forEach(ex => {
+        ctx.beginPath();
+        ctx.arc(ex, -6, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.beginPath();
+      ctx.arc(0, -1, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Weißer Glanzpunkt
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     }
   }

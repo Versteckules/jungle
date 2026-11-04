@@ -165,6 +165,8 @@
   let geysers = [];
   let enemies = [];
   let skillHearts = [];
+  let coconuts = [];
+  let coconutTimer = 4.0;
   let zoneHeartSpawned = { 1: false, 2: false, 3: false, 4: false, 5: false };
   let lastChunkEndX = 0;
   let lastChunkType = "runway";
@@ -184,8 +186,11 @@
     gong1: false
   };
 
-  // 3 Legendäre Autoren-Relikte & Spektakuläre Boss-Setpieces
+  // 3 Legendäre Autoren-Relikte, Wiederholte Maya-Stelen & Kryptex-Zustand
   let relics = [];
+  let mayaSteles = [];
+  let discoveredGlyphs = [false, false, false];
+  let failedCryptexAttempts = 0;
   const colossus = {
     active: false,
     x: 0,
@@ -305,12 +310,15 @@
 
   function updateBoostHUD() {
     boostBarFill.style.width = Math.min(100, boostCharge) + "%";
+    const boostTitleEl = document.getElementById("boost-title");
     if (isSuperSonic) {
       boostBarFill.classList.add("frenzy");
       boostBadge.style.display = "block";
+      if (boostTitleEl) boostTitleEl.innerText = "🔥 SUPER-SONIC!";
     } else {
       boostBarFill.classList.remove("frenzy");
       boostBadge.style.display = "none";
+      if (boostTitleEl) boostTitleEl.innerText = "⚡ BANANEN-BOOST";
     }
   }
 
@@ -433,79 +441,137 @@
 
     if (type === "runway") {
       const w = 520 + Math.random() * 160;
-      chunk.width = w;
-      chunk.platforms.push({ x: startX, y: groundY, width: w, height: 42, isSlide: false, isRail: false });
 
-      // Bananen in hohen Sprung-Bögen als Skill-Guides
-      if (Math.random() < 0.78) {
-        const bCount = 4;
-        const arcBaseX = startX + 110 + Math.random() * Math.max(20, w - 260);
-        for (let i = 0; i < bCount; i++) {
-          const ratio = i / (bCount - 1);
+      // MEHR LÖCHER & SCHLUCHTEN: Ab 80m kein reines Durchlaufen mehr – getimte Sprünge über Abgründe!
+      const hasChasm = approxMeter > 80 && Math.random() < 0.65;
+      if (hasChasm) {
+        const plat1W = 160 + Math.random() * 50;
+        const gapW = 105 + Math.random() * 25; // 105–130px fair überspringbar
+        const plat2W = Math.max(160, w - plat1W - gapW);
+        chunk.width = plat1W + gapW + plat2W;
+
+        chunk.platforms.push({ x: startX, y: groundY, width: plat1W, height: 42, isSlide: false, isRail: false });
+        chunk.platforms.push({ x: startX + plat1W + gapW, y: groundY, width: plat2W, height: 42, isSlide: false, isRail: false });
+
+        // Bananen-Bogen als Sprung-Guide über die Schlucht (3 Früchte)
+        for (let i = 0; i < 3; i++) {
+          const ratio = i / 2;
           bananas.push({
-            x: arcBaseX + i * 38,
-            y: groundY - 65 - Math.sin(ratio * Math.PI) * 75,
+            x: startX + plat1W + 18 + i * 36,
+            y: groundY - 65 - Math.sin(ratio * Math.PI) * 60,
             collected: false,
-            isDiamond: (Math.random() < 0.16 && currentZoneId >= 1)
+            isDiamond: (Math.random() < 0.12 && currentZoneId >= 2)
           });
         }
 
-        // Sichtbare Hänge-Liane über dem Bananen-Bogen zum Schwingen
-        if (approxMeter > 100 && Math.random() < 0.42) {
+        // Hänge-Liane als alternative Luft-Passage
+        if (Math.random() < 0.35) {
           grappleAnchors.push({
-            x: arcBaseX + 55,
-            y: groundY - 175
+            x: startX + plat1W + gapW * 0.5,
+            y: groundY - 170
           });
         }
-      }
 
-      // Lebendige Gegner (Tukan / Roll-Fass zum Draufspringen-Bouncen!) oder Dornenbusch
-      if (distance > 90 && Math.random() < 0.65) {
-        const enemyRoll = Math.random();
-        if (enemyRoll < 0.42) {
-          // Tieffliegender Regenwald-Tukan (Kopf-Bounce möglich!)
-          enemies.push({
-            type: "toucan",
-            x: startX + w * 0.65,
-            y: groundY - 62,
-            baseY: groundY - 62,
-            vx: -75,
-            width: 44,
-            height: 32,
-            stomped: false,
-            defeated: false
-          });
-        } else if (enemyRoll < 0.76) {
-          // Rollendes Tiki-Holzfass (Kopf-Bounce oder Überspringen!)
-          enemies.push({
-            type: "rolling_barrel",
-            x: startX + w * 0.68,
-            y: groundY - 20,
-            vx: -95,
-            width: 40,
-            height: 40,
-            radius: 20,
-            rot: 0,
-            stomped: false,
-            defeated: false
-          });
-        } else {
-          hazards.push({
-            x: startX + w * 0.55,
-            y: groundY - 12,
-            width: 42,
-            height: 22,
-            type: "thorns_bush"
-          });
+        // Gegner oder Dornen auf dem 2. Plattformteil
+        if (Math.random() < 0.6) {
+          if (Math.random() < 0.45) {
+            hazards.push({
+              x: startX + plat1W + gapW + plat2W * 0.55,
+              y: groundY - 12,
+              width: 38,
+              height: 22,
+              type: "thorns_bush"
+            });
+          } else {
+            enemies.push({
+              type: Math.random() < 0.5 ? "toucan" : "rolling_barrel",
+              x: startX + plat1W + gapW + plat2W * 0.65,
+              y: groundY - 58,
+              baseY: groundY - 58,
+              vx: -80,
+              width: 42,
+              height: 32,
+              stomped: false,
+              defeated: false
+            });
+          }
+        }
+      } else {
+        chunk.width = w;
+        chunk.platforms.push({ x: startX, y: groundY, width: w, height: 42, isSlide: false, isRail: false });
+
+        // Bananen in moderaten Bögen (3 Früchte, 25% reduziert)
+        if (Math.random() < 0.6) {
+          const bCount = 3;
+          const arcBaseX = startX + 110 + Math.random() * Math.max(20, w - 240);
+          for (let i = 0; i < bCount; i++) {
+            const ratio = i / (bCount - 1);
+            bananas.push({
+              x: arcBaseX + i * 38,
+              y: groundY - 65 - Math.sin(ratio * Math.PI) * 75,
+              collected: false,
+              isDiamond: (Math.random() < 0.14 && currentZoneId >= 1)
+            });
+          }
+
+          if (approxMeter > 100 && Math.random() < 0.35) {
+            grappleAnchors.push({
+              x: arcBaseX + 45,
+              y: groundY - 175
+            });
+          }
+        }
+
+        // Gegner / Dornen
+        if (distance > 90 && Math.random() < 0.6) {
+          const enemyRoll = Math.random();
+          if (enemyRoll < 0.45) {
+            enemies.push({
+              type: "toucan",
+              x: startX + w * 0.65,
+              y: groundY - 62,
+              baseY: groundY - 62,
+              vx: -75,
+              width: 44,
+              height: 32,
+              stomped: false,
+              defeated: false
+            });
+          } else if (enemyRoll < 0.8) {
+            enemies.push({
+              type: "rolling_barrel",
+              x: startX + w * 0.68,
+              y: groundY - 20,
+              vx: -95,
+              width: 40,
+              height: 40,
+              radius: 20,
+              rot: 0,
+              stomped: false,
+              defeated: false
+            });
+          } else {
+            hazards.push({
+              x: startX + w * 0.55,
+              y: groundY - 12,
+              width: 42,
+              height: 22,
+              type: "thorns_bush"
+            });
+          }
         }
       }
     } else if (type === "canopy_tiers") {
-      // NEU 1: BAUMKRONEN-DOPPELDECKER (2 bis 3 Höhen-Ebenen + optionales Goldenes Skill-Herz ganz oben!)
+      // BAUMKRONEN-DOPPELDECKER (Jetzt mit Boden-Schlucht: Springen oder Klettern Pflicht!)
       const w = spawnSkillHeartHere ? 760 : 680;
       chunk.width = w;
 
-      // Untere Haupt-Ebene
-      chunk.platforms.push({ x: startX, y: groundY, width: w, height: 42, isSlide: false, isRail: false });
+      // Untere Haupt-Ebene mit 115px Boden-Schlucht
+      const floor1W = 210;
+      const floorGapW = 115;
+      const floor2W = Math.max(200, w - floor1W - floorGapW);
+      chunk.platforms.push({ x: startX, y: groundY, width: floor1W, height: 42, isSlide: false, isRail: false });
+      chunk.platforms.push({ x: startX + floor1W + floorGapW, y: groundY, width: floor2W, height: 42, isSlide: false, isRail: false });
 
       // Ebene 2: Mittleres Baumhaus-Deck (von unten durchspringbar!)
       const deck1X = startX + 75;
@@ -990,6 +1056,7 @@
     geysers = geysers.filter(g => g.x > cleanLimit);
     enemies = enemies.filter(e => e.x > cleanLimit && !e.defeated);
     skillHearts = skillHearts.filter(sh => sh.x > cleanLimit && !sh.collected);
+    mayaSteles = mayaSteles.filter(s => s.x > cleanLimit || !s.collected);
     kokoLetters = kokoLetters.filter(l => l.x > cleanLimit || !l.collected);
     rocketBarrels = rocketBarrels.filter(r => r.x > cleanLimit || !r.collected);
   }
@@ -1027,7 +1094,7 @@
       };
       zoneHeartSpawned = { 1: false, 2: false, 3: false, 4: false, 5: false };
 
-      // 3 Legendäre Autoren-Relikte initialisieren
+      // 3 Legendäre Autoren-Relikte & Wiederholte Maya-Stelen initialisieren
       relics = RELICS.map(r => ({
         ...r,
         x: r.meter * (GAME_CONFIG.DIST_SCALE_DIVISOR || 41.5),
@@ -1035,11 +1102,38 @@
         collected: false
       }));
 
-      // Relikt-Badges im HUD zurücksetzen
-      ["helmet", "amulet", "hook"].forEach(id => {
-        const b = document.getElementById("relic-hud-" + id);
-        if (b) { b.classList.remove("unlocked"); b.classList.add("locked"); }
+      mayaSteles = (typeof MAYA_STELES_CONFIG !== "undefined" ? MAYA_STELES_CONFIG : []).map(s => ({
+        ...s,
+        x: s.meter * (GAME_CONFIG.DIST_SCALE_DIVISOR || 41.5),
+        y: WORLD_GROUND_Y,
+        collected: false
+      }));
+
+      discoveredGlyphs = [false, false, false];
+      failedCryptexAttempts = 0;
+
+      // Relikt- & Glyphen-Badges im HUD zurücksetzen (auf gesperrt & Icon + ?)
+      const badgeData = [
+        { id: "helmet", defaultText: "🪖 ?" },
+        { id: "amulet", defaultText: "🧿 ?" },
+        { id: "hook", defaultText: "🪝 ?" }
+      ];
+      badgeData.forEach(item => {
+        const b = document.getElementById("relic-hud-" + item.id);
+        if (b) {
+          b.classList.remove("unlocked");
+          b.classList.add("locked");
+          b.innerText = item.defaultText;
+        }
       });
+
+      const oracleBtn = document.getElementById("btn-oracle-help");
+      if (oracleBtn) oracleBtn.style.display = "none";
+
+      coconuts = [];
+      coconutTimer = 4.0;
+      cryptexRings = [0, 2, 4];
+      cryptexUnlocked = false;
 
       // Flow-Score, Combo, K-O-K-O & Raketen-Status voll zurücksetzen
       score = 0;
@@ -1073,7 +1167,17 @@
       zoneHeartSpawned[currentZoneId] = false;
       // Exakte Umrechnung auf Welt-Koordinaten über DIST_SCALE_DIVISOR (kein Absturz mehr!)
       player.x = lastCheckpointDist * (GAME_CONFIG.DIST_SCALE_DIVISOR || 41.5) + 100;
+
+      // Stelen ab Checkpoint re-aktivieren, falls Glyphe noch nicht entdeckt wurde
+      mayaSteles.forEach(s => {
+        if (s.meter >= lastCheckpointDist && !discoveredGlyphs[s.ringIndex]) {
+          s.collected = false;
+        }
+      });
     }
+
+    coconuts = [];
+    coconutTimer = 4.0;
 
     lastChunkType = "runway";
     recentChunkTypes = [];
@@ -1425,6 +1529,8 @@
     enemies = enemies.filter(e => e.x < rescueStartX - 60);
     skillHearts = skillHearts.filter(sh => sh.x < rescueStartX - 60);
     bananas = bananas.filter(b => b.x < rescueStartX - 20);
+    coconuts = [];
+    coconutTimer = 5.0;
 
     const rescueChunk = {
       type: "rescue_safe_platform",
@@ -1706,6 +1812,81 @@
       templeCollapse.fallingRocks = templeCollapse.fallingRocks.filter(r => r.y < WORLD_GROUND_Y + 100);
     } else if (templeCollapse.active) {
       templeCollapse.active = false;
+    }
+
+    // TÖDLICHE HERABFALLENDE KOKOSNÜSSE AUS DEM BLÄTTERDACH (AB ZONE 1 ~140m)
+    if (distance >= (COCONUT_CONFIG.START_DIST || 140) && !isVictory && !isGameOver) {
+      coconutTimer -= dt;
+      if (coconutTimer <= 0) {
+        // Spawne herabstürzende Kokosnuss diagonal aus dem Blätterdach auf Kokos Laufbahn
+        const targetX = player.x + 90 + Math.random() * 260;
+        const targetY = WORLD_GROUND_Y;
+        const startX = targetX - 220;
+        const startY = -60;
+        const distTotal = Math.hypot(targetX - startX, targetY - startY);
+        const speed = COCONUT_CONFIG.FALL_SPEED || 520;
+        const vx = ((targetX - startX) / distTotal) * speed;
+        const vy = ((targetY - startY) / distTotal) * speed;
+
+        coconuts.push({
+          x: startX,
+          y: startY,
+          vx: vx,
+          vy: vy,
+          startX: startX,
+          startY: startY,
+          targetX: targetX,
+          targetY: targetY,
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: 3.5 + Math.random() * 4.0,
+          radius: 16,
+          shattered: false
+        });
+
+        const minInt = COCONUT_CONFIG.MIN_INTERVAL || 7.0;
+        const maxInt = COCONUT_CONFIG.MAX_INTERVAL || 12.0;
+        coconutTimer = minInt + Math.random() * (maxInt - minInt);
+        jungleAudio.playSFX("coconut_fall");
+      }
+
+      for (let c of coconuts) {
+        if (c.shattered) continue;
+        c.x += c.vx * dt;
+        c.y += c.vy * dt;
+        c.rotation += c.rotSpeed * dt;
+
+        // Bodenaufschlag & Zerschellen
+        if (c.y >= c.targetY - 10) {
+          c.shattered = true;
+          graphics.emitCoconutShatter(c.targetX, c.targetY);
+          jungleAudio.playSFX("coconut_shatter");
+          camera.shake = Math.max(camera.shake, 6);
+          continue;
+        }
+
+        // Kollision mit Held Koko
+        const playerCenterY = player.y + player.height * 0.5;
+        const distToPlayer = Math.hypot(player.x - c.x, playerCenterY - c.y);
+        if (distToPlayer < (c.radius + player.width * 0.38)) {
+          c.shattered = true;
+          graphics.emitCoconutShatter(c.x, c.y);
+          jungleAudio.playSFX("coconut_shatter");
+
+          if (isSuperSonic || player.invulnerableTimer > 0 || player.state === "in_rocket") {
+            // Unverwundbar / Schild / Raketen-Smash
+            camera.shake = Math.max(camera.shake, 12);
+            triggerTrick("KOKOSNUSS-SMASH!", 150);
+          } else if (player.state !== "rescued") {
+            // Tödlicher Treffer! Zieht 1 Leben ab & Pelikan Pico rettet
+            camera.shake = 18;
+            showActionPopup("KOKOSNUSS-TREFFER! 🥥💥 (-1 💖)");
+            showSpeechBubble("AUA! KOKOSNUSS! 🥥💥", 1.5);
+            triggerRescue(false);
+            break;
+          }
+        }
+      }
+      coconuts = coconuts.filter(c => !c.shattered && c.y < WORLD_GROUND_Y + 120);
     }
 
     // Minecart Einstieg
@@ -2288,11 +2469,12 @@
       }
     }
 
-    // 3 Legendäre Autoren-Relikte einsammeln (Geocaching Easter Eggs)
+    // 3 Legendäre Autoren-Relikte einsammeln (Geocaching Easter Eggs & Kryptex-Schlüssel)
     for (let r of relics) {
       if (r.collected) continue;
       if (Math.hypot(player.x - r.x, playerCenterY - r.y) < 42) {
         r.collected = true;
+        discoveredGlyphs[r.ringIndex] = true;
         jungleAudio.playSFX("relic_pickup");
         camera.shake = 16;
         graphics.impactFlash = 0.08;
@@ -2302,10 +2484,38 @@
         if (hudBadge) {
           hudBadge.classList.remove("locked");
           hudBadge.classList.add("unlocked");
+          hudBadge.innerText = `${r.icon} ${r.glyph}`;
         }
 
         triggerTrick(`RELIKT: ${r.shortName}!`, 1000);
-        showSpeechBubble(`RELIKT GEFUNDEN! ${r.icon}✨`, 2.0);
+        showActionPopup(`🔓 KRYPTEX-RING ${r.ringIndex + 1}: ${r.glyph} (${r.glyphName})!`);
+        showSpeechBubble(`RING ${r.ringIndex + 1}: ${r.glyph}! ☀️`, 2.2);
+      }
+    }
+
+    // Wiederholte Maya-Glyphen-Stelen einsammeln (Zusätzliche Chancen, falls Relikt verpasst wurde!)
+    for (let s of mayaSteles) {
+      if (s.collected) continue;
+      if (Math.hypot(player.x - s.x, playerCenterY - s.y) < 46) {
+        s.collected = true;
+        discoveredGlyphs[s.ringIndex] = true;
+        jungleAudio.playSFX("relic_pickup");
+        camera.shake = 14;
+        graphics.impactFlash = 0.08;
+        graphics.emitSparks(s.x, s.y - 30, 22);
+
+        const badgeMap = ["helmet", "amulet", "hook"];
+        const id = badgeMap[s.ringIndex];
+        const hudBadge = document.getElementById("relic-hud-" + id);
+        if (hudBadge) {
+          hudBadge.classList.remove("locked");
+          hudBadge.classList.add("unlocked");
+          hudBadge.innerText = `${s.icon} ${s.glyph}`;
+        }
+
+        triggerTrick(`MAYA-STELE: ${s.glyph}!`, 600);
+        showActionPopup(`🗿 MAYA-STELE: RING ${s.ringIndex + 1} = ${s.glyph} (${s.name})!`);
+        showSpeechBubble(`SYMBOL ${s.ringIndex + 1}: ${s.glyph}! 🗿✨`, 2.2);
       }
     }
 
@@ -2520,6 +2730,9 @@
     // Hindernisse
     graphics.drawHazards(hazards);
 
+    // Tödliche herabfallende Kokosnüsse aus den Baumkronen
+    graphics.drawFallingCoconuts(coconuts);
+
     // Lebendige Gegner (Tukane, Fässer, Piranhas)
     graphics.drawEnemies(enemies);
 
@@ -2528,6 +2741,9 @@
 
     // 3 Legendäre Autoren-Relikte
     graphics.drawRelics(relics);
+
+    // Wiederholte Maya-Glyphen-Stelen (Zusätzliche Chancen!)
+    graphics.drawMayaSteles(mayaSteles);
 
     // 4 Versteckte K-O-K-O Buchstaben-Medaillons
     graphics.drawKOKOLetters(kokoLetters);
@@ -2633,6 +2849,21 @@
       if (prevEl) prevEl.innerText = CRYPTEX_GLYPHS[prevIdx].char;
       if (curEl) curEl.innerText = CRYPTEX_GLYPHS[curIdx].char;
       if (nextEl) nextEl.innerText = CRYPTEX_GLYPHS[nextIdx].char;
+
+      // Hinweis-Tag aktualisieren (falls Relikt oder Stele gesammelt wurde, Glyphe anzeigen)
+      const clueEl = document.getElementById(`ring-clue-${r}`);
+      if (clueEl) {
+        const relicForRing = RELICS.find(rel => rel.ringIndex === r);
+        const icon = relicForRing ? relicForRing.icon : "🪖";
+        const glyphChar = CRYPTEX_GLYPHS[CRYPTEX_SOLUTION[r]].char;
+        if (discoveredGlyphs[r]) {
+          clueEl.classList.add("revealed");
+          clueEl.innerText = `✓ ${icon} ${glyphChar}`;
+        } else {
+          clueEl.classList.remove("revealed");
+          clueEl.innerText = `${icon} ?`;
+        }
+      }
     }
   }
 
@@ -2649,41 +2880,107 @@
     const reveal = document.getElementById("cryptex-reveal");
     if (stage) stage.style.display = "block";
     if (reveal) reveal.style.display = "none";
+
+    for (let r = 0; r < 3; r++) {
+      const ringEl = document.getElementById(`ring-${r}`);
+      if (ringEl) {
+        ringEl.style.borderColor = "";
+        ringEl.style.boxShadow = "";
+      }
+    }
+    const hintEl = document.querySelector(".cryptex-hint");
+    if (hintEl) {
+      hintEl.style.color = "";
+      hintEl.innerText = (failedCryptexAttempts >= 3 && !cryptexUnlocked)
+        ? "🔮 Orakel-Hilfe unten bereit oder Ringe weiter drehen"
+        : "👆 Tippe auf die Pfeile oder Ringe zum Drehen";
+    }
+
+    const oracleBtn = document.getElementById("btn-oracle-help");
+    if (oracleBtn) oracleBtn.style.display = (failedCryptexAttempts >= 3 && !cryptexUnlocked) ? "block" : "none";
+
     updateCryptexUI();
     victoryPopup.style.display = "flex";
   }
 
   function unlockCryptex() {
     if (cryptexUnlocked) return;
-    cryptexUnlocked = true;
 
-    let spinCount = 0;
-    const spinInterval = setInterval(() => {
-      cryptexRings[0] = (cryptexRings[0] + 1) % CRYPTEX_GLYPHS.length;
-      cryptexRings[1] = (cryptexRings[1] + 1) % CRYPTEX_GLYPHS.length;
-      cryptexRings[2] = (cryptexRings[2] + 1) % CRYPTEX_GLYPHS.length;
-      jungleAudio.playSFX("cryptex_spin");
-      updateCryptexUI();
-      spinCount++;
+    // Prüfen, ob die 3 Ringe die heilige Maya-Kombination [🐒, ☀️, 🏛️] (Indizes [2, 0, 5]) zeigen
+    const isSolved = (
+      cryptexRings[0] === CRYPTEX_SOLUTION[0] &&
+      cryptexRings[1] === CRYPTEX_SOLUTION[1] &&
+      cryptexRings[2] === CRYPTEX_SOLUTION[2]
+    );
 
-      if (spinCount > 9) {
-        clearInterval(spinInterval);
-        // Alle Ringe rasten golden auf der heiligen Sonne '☀️' (Index 0) ein!
-        cryptexRings = [0, 0, 0];
-        updateCryptexUI();
+    const cylinderEl = document.querySelector(".cryptex-cylinder");
 
-        jungleAudio.playSFX("cryptex_open");
-        camera.shake = 22;
-        graphics.impactFlash = 0.12;
-
+    if (!isSolved) {
+      failedCryptexAttempts++;
+      // Falsche Kombination -> Fehler-Sound, Rüttel-Animation und Hilfestellung!
+      jungleAudio.playSFX("cryptex_error");
+      if (cylinderEl) {
+        cylinderEl.classList.remove("shake-error");
+        void cylinderEl.offsetWidth; // re-flow
+        cylinderEl.classList.add("shake-error");
         setTimeout(() => {
-          const stage = document.getElementById("cryptex-stage");
-          const reveal = document.getElementById("cryptex-reveal");
-          if (stage) stage.style.display = "none";
-          if (reveal) reveal.style.display = "block";
+          if (cylinderEl) cylinderEl.classList.remove("shake-error");
+        }, 500);
+      }
+      showActionPopup("❌ KRYPTEX BLOCKIERT! Falsche Symbol-Reihe!");
 
-          const coords = _unlockFinal(_cData, TARGET_DISTANCE);
-          finalCoordsEl.innerText = coords;
+      const oracleBtn = document.getElementById("btn-oracle-help");
+      if (failedCryptexAttempts >= 3 && oracleBtn) {
+        oracleBtn.style.display = "block";
+      }
+
+      const hintEl = document.querySelector(".cryptex-hint");
+      if (hintEl) {
+        hintEl.style.color = "#f87171";
+        if (failedCryptexAttempts >= 3) {
+          hintEl.innerText = "🔮 Das Maya-Orakel ist erwacht! Klicke unten auf das Orakel für die Lösung.";
+        } else {
+          hintEl.innerText = `❌ Versuch ${failedCryptexAttempts}/3 fehlgeschlagen! Beachte Relikte & Altar-Rätsel!`;
+        }
+        setTimeout(() => {
+          if (hintEl && !cryptexUnlocked) {
+            hintEl.style.color = "";
+            hintEl.innerText = (failedCryptexAttempts >= 3)
+              ? "🔮 Orakel-Hilfe unten bereit oder Ringe weiter drehen"
+              : "👆 Tippe auf die Pfeile oder Ringe zum Drehen";
+          }
+        }, 3500);
+      }
+      return;
+    }
+
+    // Richtige Kombination! Kryptex öffnet sich feierlich
+    cryptexUnlocked = true;
+    const oracleBtn = document.getElementById("btn-oracle-help");
+    if (oracleBtn) oracleBtn.style.display = "none";
+
+    jungleAudio.playSFX("cryptex_open");
+    camera.shake = 22;
+    graphics.impactFlash = 0.15;
+    showActionPopup("✨ KRYPTEX ENTSCHLÜSSELT! DER ALTAR ÖFFNET SICH! ☀️✨");
+
+    // Ringe leuchten grün/golden auf
+    for (let r = 0; r < 3; r++) {
+      const ringEl = document.getElementById(`ring-${r}`);
+      if (ringEl) {
+        ringEl.style.borderColor = "#4ade80";
+        ringEl.style.boxShadow = "0 0 20px rgba(74, 222, 128, 0.6)";
+      }
+    }
+
+    setTimeout(() => {
+      const stage = document.getElementById("cryptex-stage");
+      const reveal = document.getElementById("cryptex-reveal");
+      if (stage) stage.style.display = "none";
+      if (reveal) reveal.style.display = "block";
+
+      const coords = _unlockFinal(_cData, TARGET_DISTANCE);
+      finalCoordsEl.innerText = coords;
 
           // Befülle Finisher-Stempel
           const foundRelicsCount = relics.filter(r => r.collected).length;
@@ -2733,9 +3030,7 @@
               rankEl.style.background = "#fed7aa";
             }
           }
-        }, 400);
-      }
-    }, 70);
+      }, 400);
   }
 
   // Kryptex Events (Sofortige Touch- & Klick-Reaktion ohne 300ms Verzögerung)
@@ -2764,6 +3059,29 @@
   const btnUnlockCryptex = document.getElementById("btn-unlock-cryptex");
   if (btnUnlockCryptex) {
     bindFastClick(btnUnlockCryptex, unlockCryptex);
+  }
+
+  const btnOracleHelp = document.getElementById("btn-oracle-help");
+  if (btnOracleHelp) {
+    bindFastClick(btnOracleHelp, (e) => {
+      if (e && e.stopPropagation) e.stopPropagation();
+      if (cryptexUnlocked) return;
+      btnOracleHelp.style.display = "none";
+      jungleAudio.playSFX("frenzy");
+      camera.shake = 18;
+      graphics.impactFlash = 0.14;
+
+      // Orakel dreht die Ringe automatisch auf die richtige Lösung [2, 0, 5]
+      cryptexRings = [...CRYPTEX_SOLUTION];
+      updateCryptexUI();
+
+      showActionPopup("🔮 DAS MAYA-ORAKEL ENTSCHLÜSSELT DEN ALTAR! ☀️✨");
+      showSpeechBubble("DAS ORAKEL HILFT! 🔮✨", 2.0);
+
+      setTimeout(() => {
+        unlockCryptex();
+      }, 550);
+    });
   }
 
   function copyTextToClipboard(text) {

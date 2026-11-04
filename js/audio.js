@@ -12,19 +12,26 @@ class JungleAudioEngine {
 
     if (this.musicToggleBtn) {
       this.updateBtnText();
-      this.musicToggleBtn.addEventListener("click", () => this.toggleMusic());
+      const handleToggle = (e) => {
+        if (e && typeof e.preventDefault === "function") e.preventDefault();
+        if (e && typeof e.stopPropagation === "function") e.stopPropagation();
+        this.toggleMusic();
+      };
+      this.musicToggleBtn.addEventListener("click", handleToggle);
+      this.musicToggleBtn.addEventListener("touchend", handleToggle, { passive: false });
       window.addEventListener("resize", () => this.updateBtnText());
     }
   }
 
   updateBtnText() {
     if (!this.musicToggleBtn) return;
+    const isSlim = typeof window !== "undefined" && window.innerWidth <= 360;
     const isMobile = typeof window !== "undefined" && window.innerWidth <= 480;
     if (this.musicEnabled) {
-      this.musicToggleBtn.innerText = isMobile ? "🎵 ON" : "🎵 Musik: ON";
+      this.musicToggleBtn.innerText = isSlim ? "🎵" : (isMobile ? "🎵 ON" : "🎵 Musik: ON");
       this.musicToggleBtn.style.borderColor = "#34d399";
     } else {
-      this.musicToggleBtn.innerText = isMobile ? "🔇 OFF" : "🔇 Musik: OFF";
+      this.musicToggleBtn.innerText = isSlim ? "🔇" : (isMobile ? "🔇 OFF" : "🔇 Musik: OFF");
       this.musicToggleBtn.style.borderColor = "#94a3b8";
     }
   }
@@ -418,6 +425,45 @@ class JungleAudioEngine {
         gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
         osc.start(now);
         osc.stop(now + 0.3);
+      } else if (type === "coconut_fall") {
+        // Zischendes Pfeifen einer herabstürzenden Kokosnuss
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.35);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === "coconut_shatter") {
+        // Trockener, hölzerner Zersplitterungs-Knall
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.18);
+        gain.gain.setValueAtTime(0.45, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } else if (type === "cryptex_error") {
+        // Dumpfes, schweres Stein-Rumpeln bei falscher Kombination
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "square";
+        osc.frequency.setValueAtTime(110, now);
+        osc.frequency.setValueAtTime(82, now + 0.12);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+        osc.start(now);
+        osc.stop(now + 0.32);
       } else if (type === "cryptex_open") {
         // Hymnische Altar-Fanfare bei Entriegelung der Final-Koordinaten
         [392.00, 523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {

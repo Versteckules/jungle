@@ -33,7 +33,7 @@ const ZONES = [
     name: "Zone 1: Sonnen-Urwald",
     start: 0,
     end: 600,
-    baseSpeed: 300, // Aktiver Start mit Baumkronen, Bongo, Looping & Seilbahn
+    baseSpeed: 320, // Knackiger Start mit Baumkronen, Gruben, Bongo, Looping & Seilbahn
     skyTop: "#062817",
     skyBottom: "#166534",
     waterColor: "#064e3b",
@@ -51,7 +51,7 @@ const ZONES = [
     name: "Zone 2: Affenfelsen & Steinkugel",
     start: 600,
     end: 1200,
-    baseSpeed: 380, // Loren-Start, Geysire, Hängebrücken & Steinkugel-Flucht
+    baseSpeed: 400, // Loren-Start, Geysire, Hängebrücken & Steinkugel-Flucht
     skyTop: "#291508",
     skyBottom: "#ca8a04",
     waterColor: "#451a03",
@@ -69,7 +69,7 @@ const ZONES = [
     name: "Zone 3: Nebel-Wasserfall & Koloss",
     start: 1200,
     end: 1800,
-    baseSpeed: 460, // Tropengewitter & Boss 1: Der Maya-Steinkoloss!
+    baseSpeed: 480, // Tropengewitter & Boss 1: Der Maya-Steinkoloss!
     skyTop: "#021727",
     skyBottom: "#034063",
     waterColor: "#082f49",
@@ -87,7 +87,7 @@ const ZONES = [
     name: "Zone 4: Maya-Krypten & Loren-Rush",
     start: 1800,
     end: 2400,
-    baseSpeed: 550, // Schnelles Action-Tempo mit Loren-Schienen & Gongs
+    baseSpeed: 570, // Schnelles Action-Tempo mit Loren-Schienen & Gongs
     skyTop: "#2e084e",
     skyBottom: "#581c87",
     waterColor: "#1e1b4b",
@@ -105,7 +105,7 @@ const ZONES = [
     name: "Zone 5: Der Goldene Maya-Sonnentempel",
     start: 2400,
     end: 3000,
-    baseSpeed: 640, // Hyper-Speed Finale zum Altar der Götter bei 3.000m!
+    baseSpeed: 660, // Hyper-Speed Finale zum Altar der Götter bei 3.000m!
     skyTop: "#451a03",
     skyBottom: "#d97706",
     waterColor: "#78350f",
@@ -159,7 +159,7 @@ const GAME_CONFIG = {
   MAX_SPORES: 30              // Glühwürmchen & Dschungelsporen
 };
 
-// 3 Legendäre Versteck-Relikte der Autoren (Geocaching Easter Eggs, skaliert auf 3.000m)
+// 3 Legendäre Versteck-Relikte der Autoren (Geocaching Easter Eggs & Kryptex-Schlüssel)
 const RELICS = [
   {
     id: "helmet",
@@ -168,7 +168,11 @@ const RELICS = [
     meter: 520,
     icon: "🪖",
     color: "#facc15",
-    desc: "Auf den geheimen Baumkronen vor Affenfelsen gefunden!"
+    desc: "Auf den geheimen Baumkronen vor Affenfelsen gefunden!",
+    glyph: "🐒",
+    glyphName: "Batz (Held Koko)",
+    ringIndex: 0,
+    targetGlyphIndex: 2
   },
   {
     id: "amulet",
@@ -177,7 +181,11 @@ const RELICS = [
     meter: 1450,
     icon: "🧿",
     color: "#38bdf8",
-    desc: "In der geheimen Wasserfall-Grotte entdeckt!"
+    desc: "In der geheimen Wasserfall-Grotte entdeckt!",
+    glyph: "☀️",
+    glyphName: "Kinich (Sonne)",
+    ringIndex: 1,
+    targetGlyphIndex: 0
   },
   {
     id: "hook",
@@ -186,9 +194,27 @@ const RELICS = [
     meter: 2280,
     icon: "🪝",
     color: "#f59e0b",
-    desc: "Über der Maya-Schienenkrypta geborgen!"
+    desc: "Über der Maya-Schienenkrypta geborgen!",
+    glyph: "🏛️",
+    glyphName: "Pop (Sonnentempel)",
+    ringIndex: 2,
+    targetGlyphIndex: 5
   }
 ];
+
+// Die exakte, geheime Maya-Kryptex Lösung: [Ring 1 = 🐒, Ring 2 = ☀️, Ring 3 = 🏛️]
+const CRYPTEX_SOLUTION = [2, 0, 5];
+const CRYPTEX_RIDDLE = "Der kühne Affe (🐒) eilt unter der ewigen Sonne (☀️) zum heiligen Tempel (🏛️).";
+
+// Tödliche herabfallende Kokosnüsse (Gefahr aus den Baumkronen)
+const COCONUT_CONFIG = {
+  START_DIST: 140,      // Startet ab Zone 1 (~140m)
+  MIN_INTERVAL: 7.0,    // Alle 7 bis 12 Sekunden
+  MAX_INTERVAL: 12.0,
+  FALL_SPEED: 520,      // Schneller diagonaler Sturz
+  WARN_TIME: 1.25,      // 1.25s Vorwarnung per rotem Einschlag-Schatten am Boden
+  DAMAGE: 1             // Zieht 1 Herz ab (bzw. Pelikan-Rettung)
+};
 
 // Seltene Goldene Skill-Herzen (1x pro Zone auf einer hohen oberen Baumkronen-Plattform!)
 const SKILL_HEART_METERS = [320, 900, 1420, 2080, 2640];
@@ -211,6 +237,24 @@ const BOSS_CONFIG = {
   COLLAPSE_START: 2760,
   COLLAPSE_END: 2960
 };
+
+// Wiederholte Maya-Glyphen-Stelen (Zusätzliche Chancen, falls man ein Relikt verpasst hat!)
+const MAYA_STELES_CONFIG = [
+  // Ring 1 (🐒 Batz): Relikt bei 520m, Stelen bei 380m, 850m, 1250m
+  { ringIndex: 0, meter: 380, glyph: "🐒", name: "Batz (Held Koko)", icon: "🪖" },
+  { ringIndex: 0, meter: 850, glyph: "🐒", name: "Batz (Held Koko)", icon: "🪖" },
+  { ringIndex: 0, meter: 1250, glyph: "🐒", name: "Batz (Held Koko)", icon: "🪖" },
+
+  // Ring 2 (☀️ Kinich): Relikt bei 1450m, Stelen bei 950m, 1720m, 2150m
+  { ringIndex: 1, meter: 950, glyph: "☀️", name: "Kinich (Sonne)", icon: "🧿" },
+  { ringIndex: 1, meter: 1720, glyph: "☀️", name: "Kinich (Sonne)", icon: "🧿" },
+  { ringIndex: 1, meter: 2150, glyph: "☀️", name: "Kinich (Sonne)", icon: "🧿" },
+
+  // Ring 3 (🏛️ Pop): Relikt bei 2280m, Stelen bei 1600m, 2520m, 2820m
+  { ringIndex: 2, meter: 1600, glyph: "🏛️", name: "Pop (Tempel)", icon: "🪝" },
+  { ringIndex: 2, meter: 2520, glyph: "🏛️", name: "Pop (Tempel)", icon: "🪝" },
+  { ringIndex: 2, meter: 2820, glyph: "🏛️", name: "Pop (Tempel)", icon: "🪝" }
+];
 
 // Maya-Kryptex Glyphen für das interaktive 3D-Zylinder-Rätsel bei 4.000m
 const CRYPTEX_GLYPHS = [

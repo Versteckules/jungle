@@ -572,7 +572,7 @@ canvas#game {
     top: max(6px, env(safe-area-inset-top));
     left: 50%;
     transform: translateX(-50%);
-    width: clamp(105px, 29vw, 145px);
+    width: clamp(95px, 26vw, 130px);
     gap: 2px;
   }
   #boost-title {
@@ -595,8 +595,7 @@ canvas#game {
     border-radius: 6px;
   }
   #boost-badge {
-    font-size: 8px;
-    padding: 1px 6px;
+    display: none !important; /* Auf Smartphones wird der Frenzy-Status direkt im Titel '🔥 SUPER-SONIC!' und der Regenbogen-Bar angezeigt -> kein vertikales Ausdehnen! */
   }
   #mobile-hint {
     font-size: 9.5px;
@@ -625,7 +624,7 @@ canvas#game {
     font-size: 12.5px;
   }
   #boost-hud {
-    width: 98px;
+    width: 88px;
   }
   #boost-title {
     font-size: 7.5px;
@@ -642,6 +641,16 @@ canvas#game {
   }
   .relic-badge {
     font-size: 10.5px;
+  }
+  .modal-card-victory {
+    padding: 14px 10px !important;
+  }
+  .cryptex-cylinder {
+    gap: 8px;
+  }
+  .cryptex-ring {
+    width: 68px;
+    padding: 4px 6px;
   }
 }
 
@@ -968,14 +977,19 @@ canvas#game {
   z-index: 60;
   padding: 16px;
   box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .modal-card {
+  margin: auto;
   background: rgba(11, 41, 26, 0.96);
   border: 2px solid #ef4444;
   border-radius: 26px;
   padding: clamp(20px, 4.5vw, 34px);
   max-width: 490px;
+  max-height: 94vh;
   width: 100%;
   text-align: center;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(239, 68, 68, 0.4);
@@ -983,6 +997,7 @@ canvas#game {
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  touch-action: pan-y;
 }
 
 #victory-popup .modal-card {
@@ -1095,6 +1110,7 @@ canvas#game {
   max-height: 92vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 18px 20px !important;
 }
 
@@ -1116,12 +1132,72 @@ canvas#game {
   50% { transform: scale(1.15); filter: drop-shadow(0 0 16px #f59e0b); }
 }
 
+.cryptex-riddle-box {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1.5px solid #ca8a04;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 6px auto;
+  text-align: center;
+  max-width: 380px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(250, 204, 21, 0.15);
+}
+
+.riddle-title {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #facc15;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.riddle-text {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fef08a;
+  margin: 0;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.ring-clue-tag {
+  font-size: 10px;
+  font-weight: 900;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  padding: 1px 6px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ring-clue-tag.revealed {
+  color: #1e0a02;
+  background: linear-gradient(90deg, #facc15, #f59e0b);
+  border: 1px solid #fef08a;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+}
+
 .cryptex-cylinder {
   display: flex;
   justify-content: center;
   gap: 14px;
   margin: 12px 0;
   perspective: 600px;
+  transition: transform 0.2s ease;
+}
+
+.cryptex-cylinder.shake-error {
+  animation: cryptexShake 0.45s ease;
+}
+
+@keyframes cryptexShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-9px); }
+  40%, 80% { transform: translateX(9px); }
 }
 
 .cryptex-ring {
@@ -1206,6 +1282,15 @@ canvas#game {
 @keyframes altarPulse {
   0% { transform: scale(1); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45); }
   100% { transform: scale(1.03); box-shadow: 0 8px 30px rgba(250, 204, 21, 0.85); }
+}
+
+.btn-oracle-pulse {
+  animation: oraclePulse 1.8s infinite ease-in-out;
+}
+
+@keyframes oraclePulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45); }
+  50% { transform: scale(1.03); box-shadow: 0 8px 28px rgba(139, 92, 246, 0.85), 0 0 14px rgba(250, 204, 21, 0.6); }
 }
 
 /* FINISHER STEMPEL CARD */
