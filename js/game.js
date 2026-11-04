@@ -1124,6 +1124,9 @@
     grappleHook.active = false;
     giantBoulder.active = false;
 
+    const mobileHintReset = document.getElementById("mobile-hint");
+    if (mobileHintReset) mobileHintReset.style.opacity = "1";
+
     // KRITISCHER KAMERA-RESET VOR DEM CHUNK-SPAWN (verhindert Löschen der Startplattform nach Tod!)
     const logicalW = window.innerWidth;
     const logicalH = window.innerHeight;
@@ -1485,6 +1488,16 @@
     // Distanz (kalibriert auf 3.000m komprimierte Action)
     distance += (player.vx * dt) / (GAME_CONFIG.DIST_SCALE_DIVISOR || 41.5);
     distCounterEl.innerHTML = `${Math.floor(distance)} <span>/ 3000 m</span>`;
+
+    // Mobile Steuerungshinweis nach den ersten 120m (Tutorial-Runway) sanft ausblenden
+    const mobileHintEl = document.getElementById("mobile-hint");
+    if (mobileHintEl) {
+      if (distance > 120 && mobileHintEl.style.opacity !== "0") {
+        mobileHintEl.style.opacity = "0";
+      } else if (distance <= 120 && mobileHintEl.style.opacity === "0") {
+        mobileHintEl.style.opacity = "1";
+      }
+    }
 
     // Zonenwechsel
     const activeZone = ZONES[currentZoneId - 1];
@@ -2559,8 +2572,12 @@
     const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
     lastTimestamp = timestamp;
 
-    update(dt);
-    draw();
+    try {
+      update(dt);
+      draw();
+    } catch (err) {
+      console.error("Game loop error:", err);
+    }
 
     requestAnimationFrame(gameLoop);
   }
@@ -2721,7 +2738,16 @@
     }, 70);
   }
 
-  // Kryptex Events
+  // Kryptex Events (Sofortige Touch- & Klick-Reaktion ohne 300ms Verzögerung)
+  function bindFastClick(el, handler) {
+    if (!el) return;
+    el.addEventListener("click", handler);
+    el.addEventListener("touchend", (e) => {
+      if (typeof e.preventDefault === "function") e.preventDefault();
+      handler(e);
+    }, { passive: false });
+  }
+
   for (let r = 0; r < 3; r++) {
     const ringEl = document.getElementById(`ring-${r}`);
     if (ringEl) {
@@ -2729,26 +2755,62 @@
       const btnDown = ringEl.querySelector(".btn-down");
       const viewport = ringEl.querySelector(".ring-viewport");
 
-      if (btnUp) btnUp.addEventListener("click", (e) => { e.stopPropagation(); rotateRing(r, -1); });
-      if (btnDown) btnDown.addEventListener("click", (e) => { e.stopPropagation(); rotateRing(r, 1); });
-      if (viewport) viewport.addEventListener("click", (e) => { e.stopPropagation(); rotateRing(r, 1); });
+      if (btnUp) bindFastClick(btnUp, (e) => { if (e && e.stopPropagation) e.stopPropagation(); rotateRing(r, -1); });
+      if (btnDown) bindFastClick(btnDown, (e) => { if (e && e.stopPropagation) e.stopPropagation(); rotateRing(r, 1); });
+      if (viewport) bindFastClick(viewport, (e) => { if (e && e.stopPropagation) e.stopPropagation(); rotateRing(r, 1); });
     }
   }
 
   const btnUnlockCryptex = document.getElementById("btn-unlock-cryptex");
   if (btnUnlockCryptex) {
-    btnUnlockCryptex.addEventListener("click", unlockCryptex);
+    bindFastClick(btnUnlockCryptex, unlockCryptex);
   }
 
-  btnCopyCoords.addEventListener("click", () => {
+  function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise((resolve, reject) => {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (ok) resolve();
+        else reject(new Error("execCommand failed"));
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  function handleCopyCoords(e) {
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
     const gcStr = typeof GC_CODE !== "undefined" ? GC_CODE : "GCC04PH";
     const text = `Jungle Hero (${gcStr})\n${finalCoordsEl.innerText}\nHinweis: Angeln\n(Finisher – Versteckules & Tschango)`;
-    navigator.clipboard.writeText(text).then(() => {
+    copyTextToClipboard(text).then(() => {
       btnCopyCoords.innerText = "✅ In die Zwischenablage kopiert!";
       setTimeout(() => {
         btnCopyCoords.innerText = "📋 Koordinaten & Angel-Tipp kopieren";
       }, 2500);
+    }).catch(() => {
+      btnCopyCoords.innerText = "⚠️ Bitte manuell markieren & kopieren";
+      setTimeout(() => {
+        btnCopyCoords.innerText = "📋 Koordinaten & Angel-Tipp kopieren";
+      }, 2500);
     });
-  });
+  }
+
+  bindFastClick(btnCopyCoords, handleCopyCoords);
+
+  // Initiales Szenen-Setup (Start-Runway, Koko & Bananen sofort rendern)
+  resetGame(true);
+  isPlaying = false;
 
 })();

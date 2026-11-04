@@ -11,7 +11,21 @@ class JungleAudioEngine {
     this._lastClack = 0;
 
     if (this.musicToggleBtn) {
+      this.updateBtnText();
       this.musicToggleBtn.addEventListener("click", () => this.toggleMusic());
+      window.addEventListener("resize", () => this.updateBtnText());
+    }
+  }
+
+  updateBtnText() {
+    if (!this.musicToggleBtn) return;
+    const isMobile = typeof window !== "undefined" && window.innerWidth <= 480;
+    if (this.musicEnabled) {
+      this.musicToggleBtn.innerText = isMobile ? "🎵 ON" : "🎵 Musik: ON";
+      this.musicToggleBtn.style.borderColor = "#34d399";
+    } else {
+      this.musicToggleBtn.innerText = isMobile ? "🔇 OFF" : "🔇 Musik: OFF";
+      this.musicToggleBtn.style.borderColor = "#94a3b8";
     }
   }
 
@@ -30,13 +44,10 @@ class JungleAudioEngine {
   toggleMusic() {
     this.init();
     this.musicEnabled = !this.musicEnabled;
+    this.updateBtnText();
     if (this.musicEnabled) {
-      this.musicToggleBtn.innerText = "🎵 Musik: ON";
-      this.musicToggleBtn.style.borderColor = "#34d399";
       if (this.bgMusic) this.bgMusic.play().catch(() => {});
     } else {
-      this.musicToggleBtn.innerText = "🔇 Musik: OFF";
-      this.musicToggleBtn.style.borderColor = "#94a3b8";
       if (this.bgMusic) this.bgMusic.pause();
     }
   }

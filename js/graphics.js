@@ -970,6 +970,19 @@ class JungleGraphicsEngine {
       ctx.stroke();
     }
 
+    // KÖNIGLICHE GOLD-KOKO AURA (100% K-O-K-O MEISTER)
+    if (player.isGoldKoko) {
+      const goldPulse = Math.sin(Date.now() * 0.02) * 5;
+      const goldAura = ctx.createRadialGradient(0, 0, 8, 0, 0, 42 + goldPulse);
+      goldAura.addColorStop(0, "rgba(254, 240, 138, 0.95)");
+      goldAura.addColorStop(0.5, "rgba(250, 204, 21, 0.55)");
+      goldAura.addColorStop(1, "rgba(234, 179, 8, 0)");
+      ctx.fillStyle = goldAura;
+      ctx.beginPath();
+      ctx.arc(0, 0, 42 + goldPulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // SUPER-SONIC FRENZY GLÜHENDE AURA & GHOST-TRAILS (KOKO BLEIBT VOLL SICHTBAR!)
     if (isSuperSonic) {
       // Dreifacher goldener Kometen-Schweif / Ghost-Afterimages hinter Koko
@@ -1132,25 +1145,64 @@ class JungleGraphicsEngine {
     ctx.stroke();
     ctx.restore();
 
-    // 3. KLEINER ENTDECKER-RUCKSACK AM RÜCKEN
+    // 3. RAKETEN-FASS (JETPACK) ODER ENTDECKER-RUCKSACK AM RÜCKEN
     ctx.save();
-    ctx.fillStyle = "#15803d";
-    ctx.strokeStyle = OUTLINE;
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(-16, -6, 11, 15, 4);
-    else ctx.rect(-16, -6, 11, 15);
-    ctx.fill();
-    ctx.stroke();
+    if (player.state === "in_rocket") {
+      // Spektakuläres Jet-Barrel auf Kokos Rücken mit Zwillings-Feuerstrahl!
+      const jetGrad = ctx.createLinearGradient(-30, -18, -10, 18);
+      jetGrad.addColorStop(0, "#f87171");
+      jetGrad.addColorStop(0.4, "#dc2626");
+      jetGrad.addColorStop(0.85, "#991b1b");
+      jetGrad.addColorStop(1, "#450a0a");
+      ctx.fillStyle = jetGrad;
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-28, -14, 18, 28, 5);
+      else ctx.rect(-28, -14, 18, 28);
+      ctx.fill();
+      ctx.stroke();
 
-    // Goldene Rucksack-Schnalle & Schlafrollen-Aufsatz
-    ctx.fillStyle = "#facc15";
-    ctx.fillRect(-15, -1, 6, 3.5);
-    ctx.fillStyle = "#ca8a04";
-    ctx.beginPath();
-    ctx.ellipse(-11, -7, 5, 3, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+      // Goldene Reifen am Jetpack
+      ctx.fillStyle = "#facc15";
+      [-10, 6].forEach(by => {
+        ctx.fillRect(-28, by, 18, 3.5);
+      });
+
+      // Zwillings-Feuerstrahl nach hinten-unten
+      const flameLen = 28 + Math.sin(now * 0.04) * 12;
+      const flameGrad = ctx.createLinearGradient(-26, 14, -26 - flameLen * 0.7, 14 + flameLen);
+      flameGrad.addColorStop(0, "#ffffff");
+      flameGrad.addColorStop(0.2, "#fef08a");
+      flameGrad.addColorStop(0.5, "#f97316");
+      flameGrad.addColorStop(0.85, "#ef4444");
+      flameGrad.addColorStop(1, "rgba(239, 68, 68, 0)");
+      ctx.fillStyle = flameGrad;
+      ctx.beginPath();
+      ctx.moveTo(-28, 14);
+      ctx.lineTo(-28 - flameLen * 0.8, 14 + flameLen * 0.6);
+      ctx.lineTo(-12, 14);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.fillStyle = "#15803d";
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-16, -6, 11, 15, 4);
+      else ctx.rect(-16, -6, 11, 15);
+      ctx.fill();
+      ctx.stroke();
+
+      // Goldene Rucksack-Schnalle & Schlafrollen-Aufsatz
+      ctx.fillStyle = "#facc15";
+      ctx.fillRect(-15, -1, 6, 3.5);
+      ctx.fillStyle = "#ca8a04";
+      ctx.beginPath();
+      ctx.ellipse(-11, -7, 5, 3, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
     ctx.restore();
 
     // 4. TORSO (Warmes Honigbraun + heller Bauch + Rote Diddy-Kong Entdecker-Weste)
@@ -1179,11 +1231,17 @@ class JungleGraphicsEngine {
     ctx.ellipse(3.5, 4, 8.5, 10.5, 0.12, 0, Math.PI * 2);
     ctx.fill();
 
-    // Rote Entdecker-Weste mit Goldrand (Diddy-Kong / Adventure Style)
+    // Entdecker-Weste mit Goldrand (königlich goldene Weste bei Gold-Koko!)
     const vestGrad = ctx.createLinearGradient(-10, -8, 6, 10);
-    vestGrad.addColorStop(0, "#ef4444");
-    vestGrad.addColorStop(0.6, "#dc2626");
-    vestGrad.addColorStop(1, "#991b1b");
+    if (player.isGoldKoko) {
+      vestGrad.addColorStop(0, "#fef08a");
+      vestGrad.addColorStop(0.5, "#facc15");
+      vestGrad.addColorStop(1, "#b45309");
+    } else {
+      vestGrad.addColorStop(0, "#ef4444");
+      vestGrad.addColorStop(0.6, "#dc2626");
+      vestGrad.addColorStop(1, "#991b1b");
+    }
     ctx.fillStyle = vestGrad;
     ctx.beginPath();
     ctx.moveTo(-11, -6);
@@ -1337,9 +1395,9 @@ class JungleGraphicsEngine {
     ctx.strokeStyle = OUTLINE;
     ctx.lineWidth = 2.6;
 
-    // Wehende rote Bandana-Bänder im Wind hinter dem Kopf
+    // Wehende Bandana-Bänder im Wind hinter dem Kopf (golden bei Gold-Koko)
     const bandWave = Math.sin(now * 0.024) * 4.5;
-    ctx.fillStyle = "#dc2626";
+    ctx.fillStyle = player.isGoldKoko ? "#f59e0b" : "#dc2626";
     ctx.beginPath();
     ctx.moveTo(-9, -7);
     ctx.quadraticCurveTo(-20, -10 + bandWave, -27, -5 + bandWave);
@@ -1349,11 +1407,17 @@ class JungleGraphicsEngine {
     ctx.fill();
     ctx.stroke();
 
-    // Rote Cap-Kuppel oben auf dem Kopf
+    // Entdecker-Cap-Kuppel oben auf dem Kopf (golden bei Gold-Koko)
     const capGrad = ctx.createLinearGradient(-8, -16, 10, -6);
-    capGrad.addColorStop(0, "#f87171");
-    capGrad.addColorStop(0.4, "#ef4444");
-    capGrad.addColorStop(1, "#b91c1c");
+    if (player.isGoldKoko) {
+      capGrad.addColorStop(0, "#ffffff");
+      capGrad.addColorStop(0.4, "#facc15");
+      capGrad.addColorStop(1, "#ca8a04");
+    } else {
+      capGrad.addColorStop(0, "#f87171");
+      capGrad.addColorStop(0.4, "#ef4444");
+      capGrad.addColorStop(1, "#b91c1c");
+    }
     ctx.fillStyle = capGrad;
     ctx.beginPath();
     ctx.arc(0.5, -6.5, 11.5, Math.PI * 1.05, Math.PI * 1.98);
@@ -1362,7 +1426,7 @@ class JungleGraphicsEngine {
     ctx.stroke();
 
     // Cap-Schirm (Visor) nach vorne
-    ctx.fillStyle = "#dc2626";
+    ctx.fillStyle = player.isGoldKoko ? "#eab308" : "#dc2626";
     ctx.beginPath();
     ctx.moveTo(4, -9);
     ctx.quadraticCurveTo(18, -11, 20, -6.5);
@@ -1396,6 +1460,44 @@ class JungleGraphicsEngine {
     }
     ctx.fill();
     ctx.stroke();
+
+    // GOLDENE MAYA-KRONE FÜR DEN 100% K-O-K-O MEISTER
+    if (player.isGoldKoko) {
+      ctx.save();
+      ctx.translate(2, -20);
+      ctx.fillStyle = "#facc15";
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-9, 3);
+      ctx.lineTo(-10, -5);
+      ctx.lineTo(-5, -1);
+      ctx.lineTo(0, -8);
+      ctx.lineTo(5, -1);
+      ctx.lineTo(10, -5);
+      ctx.lineTo(9, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Rubin & Saphir Juwelen in der Krone
+      ctx.fillStyle = "#ef4444";
+      ctx.beginPath();
+      ctx.arc(0, -1, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.arc(-5, 0, 1.2, 0, Math.PI * 2);
+      ctx.arc(5, 0, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Krone Glitzerstern
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(0, -7, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
 
     ctx.restore();
 
@@ -2099,6 +2201,227 @@ class JungleGraphicsEngine {
       ctx.strokeText("💖 +1 HERZ", 0, -22);
       ctx.fillStyle = "#fef08a";
       ctx.fillText("💖 +1 HERZ", 0, -22);
+
+      ctx.restore();
+    }
+  }
+
+  // --- DIE 4 GOLDENEN K-O-K-O BUCHSTABEN-MEDAILLONS (DONKEY KONG STYLE) ---
+  drawKOKOLetters(kokoLetters) {
+    if (!kokoLetters || !kokoLetters.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let item of kokoLetters) {
+      if (item.collected) continue;
+      ctx.save();
+
+      // Schwebende Bob- & Dreh-Animation
+      const hoverY = Math.sin(now * 0.005 + item.x) * 6;
+      const pulseScale = 1.0 + Math.sin(now * 0.008 + item.index) * 0.06;
+      ctx.translate(item.x, item.y + hoverY);
+      ctx.scale(pulseScale, pulseScale);
+
+      // 1. Goldener Heiligenschein / Sonnen-Aura
+      const auraGrad = ctx.createRadialGradient(0, 0, 6, 0, 0, 36);
+      auraGrad.addColorStop(0, "rgba(254, 240, 138, 0.95)");
+      auraGrad.addColorStop(0.45, "rgba(250, 204, 21, 0.45)");
+      auraGrad.addColorStop(1, "rgba(245, 158, 11, 0)");
+      ctx.fillStyle = auraGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 36, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Äußerer rotierender Sonnen-Strahlenkranz (Maya-Sonne)
+      const rayAngle = now * 0.0018 + item.index;
+      ctx.save();
+      ctx.rotate(rayAngle);
+      ctx.fillStyle = "rgba(250, 204, 21, 0.28)";
+      for (let r = 0; r < 8; r++) {
+        ctx.rotate(Math.PI / 4);
+        ctx.beginPath();
+        ctx.moveTo(-3, -20);
+        ctx.lineTo(0, -30);
+        ctx.lineTo(3, -20);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // 3. 3D-Prägung des goldenen Medaillons
+      ctx.fillStyle = "#1e0a02";
+      ctx.beginPath();
+      ctx.arc(0, 0, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      const coinGrad = ctx.createRadialGradient(-5, -6, 2, 0, 0, 20);
+      coinGrad.addColorStop(0, "#ffffff");
+      coinGrad.addColorStop(0.25, "#fef08a");
+      coinGrad.addColorStop(0.6, "#facc15");
+      coinGrad.addColorStop(0.9, "#ca8a04");
+      coinGrad.addColorStop(1, "#78350f");
+      ctx.fillStyle = coinGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Aztekische Innen-Rille
+      ctx.strokeStyle = "#854d0e";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(0, 0, 16.5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 4. Der Buchstabe (K oder O) in 3D-Relief-Schrift
+      ctx.font = "900 24px 'Impact', 'Arial Black', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      // Schlagschatten
+      ctx.fillStyle = "#451a03";
+      ctx.fillText(item.char, 1.5, 2.5);
+
+      // Goldene Schrift mit Lichtreflex
+      const textGrad = ctx.createLinearGradient(0, -12, 0, 12);
+      textGrad.addColorStop(0, "#ffffff");
+      textGrad.addColorStop(0.35, "#fef08a");
+      textGrad.addColorStop(0.7, "#facc15");
+      textGrad.addColorStop(1, "#b45309");
+      ctx.fillStyle = textGrad;
+      ctx.strokeStyle = "#1e0a02";
+      ctx.lineWidth = 2.2;
+      ctx.strokeText(item.char, 0, 1);
+      ctx.fillText(item.char, 0, 1);
+
+      // 5. Glitzersternchen
+      const glintPulse = Math.sin(now * 0.012 + item.x) * 0.5 + 0.5;
+      if (glintPulse > 0.3) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${glintPulse})`;
+        ctx.beginPath();
+        ctx.arc(11, -11, 2.8 * glintPulse, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // --- SPEKTAKULÄRES RAKETEN-FASS (JET-BARREL PICKUP) ---
+  drawRocketBarrels(rocketBarrels) {
+    if (!rocketBarrels || !rocketBarrels.length) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let rb of rocketBarrels) {
+      if (rb.collected) continue;
+      ctx.save();
+
+      const hoverY = Math.sin(now * 0.006 + rb.x) * 6;
+      const tilt = Math.sin(now * 0.005) * 0.1;
+      ctx.translate(rb.x, rb.y + hoverY);
+      ctx.rotate(tilt);
+
+      // 1. Feuerschein / Flammen-Aura
+      const fireAura = ctx.createRadialGradient(0, 0, 8, 0, 0, 42);
+      fireAura.addColorStop(0, "rgba(254, 240, 138, 0.9)");
+      fireAura.addColorStop(0.35, "rgba(249, 115, 22, 0.65)");
+      fireAura.addColorStop(0.75, "rgba(239, 68, 68, 0.25)");
+      fireAura.addColorStop(1, "rgba(239, 68, 68, 0)");
+      ctx.fillStyle = fireAura;
+      ctx.beginPath();
+      ctx.arc(0, 0, 42, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Flammen aus den Zwillings-Düsen unten
+      const flamePulse = Math.sin(now * 0.035) * 4;
+      [-11, 11].forEach(nx => {
+        const flameGrad = ctx.createLinearGradient(nx, 16, nx, 36 + flamePulse);
+        flameGrad.addColorStop(0, "#ffffff");
+        flameGrad.addColorStop(0.2, "#facc15");
+        flameGrad.addColorStop(0.65, "#f97316");
+        flameGrad.addColorStop(1, "rgba(239, 68, 68, 0)");
+        ctx.fillStyle = flameGrad;
+        ctx.beginPath();
+        ctx.moveTo(nx - 4, 16);
+        ctx.lineTo(nx, 36 + flamePulse);
+        ctx.lineTo(nx + 4, 16);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#334155";
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.rect(nx - 5, 12, 10, 6);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // 3. Raketen-Fass Korpus (Donkey Kong Stil)
+      const OUTLINE = "#1e0a02";
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2.8;
+
+      const bGrad = ctx.createRadialGradient(-4, -4, 4, 0, 0, 24);
+      bGrad.addColorStop(0, "#f87171");
+      bGrad.addColorStop(0.4, "#dc2626");
+      bGrad.addColorStop(0.85, "#991b1b");
+      bGrad.addColorStop(1, "#450a0a");
+      ctx.fillStyle = bGrad;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-18, -20, 36, 36, 10);
+      else ctx.rect(-18, -20, 36, 36);
+      ctx.fill();
+      ctx.stroke();
+
+      // Goldene Verstärkungs-Bänder mit Nieten
+      ctx.fillStyle = "#facc15";
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 1.6;
+      [-14, 10].forEach(by => {
+        ctx.beginPath();
+        ctx.rect(-18, by, 36, 5);
+        ctx.fill();
+        ctx.stroke();
+        [-12, 0, 12].forEach(rx => {
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(rx, by + 2.5, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#facc15";
+        });
+      });
+
+      // Gelbes Raketen-Symbol in der Mitte
+      ctx.fillStyle = "#facc15";
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 1.8;
+      ctx.font = "900 18px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.strokeText("🚀", 0, -2);
+      ctx.fillText("🚀", 0, -2);
+
+      // Aerodynamische Spitze oben
+      ctx.fillStyle = "#facc15";
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-10, -20);
+      ctx.lineTo(0, -32);
+      ctx.lineTo(10, -20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Leuchtender Banner
+      ctx.font = "900 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.strokeStyle = "#1e0a02";
+      ctx.lineWidth = 3;
+      ctx.strokeText("🚀 RAKETEN-FASS", 0, -38);
+      ctx.fillStyle = "#fef08a";
+      ctx.fillText("🚀 RAKETEN-FASS", 0, -38);
 
       ctx.restore();
     }
