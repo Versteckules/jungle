@@ -229,8 +229,13 @@
       // Hochformat (Handy): 780px Welt-Voraussicht für viel besseren Überblick nach vorne!
       const targetVisibleW = 780;
       camera.scale = Math.min(1.0, logicalW / targetVisibleW);
+    } else if (logicalH <= 520) {
+      // Handy-Querformat (Mobile Landscape): Großzügiges Dschungel-Panorama (ca. 35-40% weiter herausgezoomt)
+      // Ziel: ca. 560px - 580px sichtbare Welthöhe für ideale Arcade-Proportionen & maximale Reaktionszeit!
+      const targetVisibleH = 570;
+      camera.scale = Math.min(0.72, Math.max(0.52, logicalH / targetVisibleH));
     } else {
-      // Querformat: Breites Sichtfeld für maximale Voraussicht
+      // Querformat (Desktop / Tablet): Breites Sichtfeld für maximale Voraussicht
       const targetVisibleW = Math.max(900, logicalW * 0.95);
       camera.scale = Math.min(1.08, logicalW / targetVisibleW);
     }
@@ -1260,9 +1265,11 @@
     const logicalW = window.innerWidth;
     const logicalH = window.innerHeight;
     const isPortrait = logicalH > logicalW;
-    const leadFactor = isPortrait ? 0.17 : 0.22;
+    const isMobileLandscape = (!isPortrait && logicalH <= 520);
+    const leadFactor = isPortrait ? 0.17 : (isMobileLandscape ? 0.28 : 0.22);
+    const vOffset = isPortrait ? 0.62 : (isMobileLandscape ? 0.58 : 0.54);
     camera.x = player.x - (logicalW / camera.scale) * leadFactor;
-    camera.y = player.y - (logicalH / camera.scale) * (isPortrait ? 0.62 : 0.54);
+    camera.y = player.y - (logicalH / camera.scale) * vOffset;
     camera.shake = 0;
 
     chunks = [];
@@ -1476,6 +1483,11 @@
     if (e.target.closest("#start-menu, #game-over-modal, #victory-popup, #music-toggle, .btn-modal")) return;
     jungleAudio.init();
 
+    // Falls Musik noch vom Browser blockiert war, beim ersten Tippen/Sprung sofort starten!
+    if (jungleAudio.musicEnabled && jungleAudio.bgMusic && jungleAudio.bgMusic.paused) {
+      jungleAudio.playMusic();
+    }
+
     touchState.isDown = true;
     player.jumpHeld = true;
 
@@ -1494,6 +1506,10 @@
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space" || e.code === "ArrowUp" || e.code === "Enter") {
       e.preventDefault();
+      jungleAudio.init();
+      if (jungleAudio.musicEnabled && jungleAudio.bgMusic && jungleAudio.bgMusic.paused) {
+        jungleAudio.playMusic();
+      }
       player.jumpHeld = true;
       handleActionJumpOrShoot();
     }
@@ -1984,9 +2000,11 @@
       const logicalW = window.innerWidth;
       const logicalH = window.innerHeight;
       const isPortrait = logicalH > logicalW;
-      const leadFactor = isPortrait ? 0.17 : 0.22;
+      const isMobileLandscape = (!isPortrait && logicalH <= 520);
+      const leadFactor = isPortrait ? 0.17 : (isMobileLandscape ? 0.28 : 0.22);
+      const vOffset = isPortrait ? 0.62 : (isMobileLandscape ? 0.58 : 0.54);
       const targetCamX = player.x - (logicalW / camera.scale) * leadFactor;
-      const targetCamY = player.y - (logicalH / camera.scale) * (isPortrait ? 0.62 : 0.54);
+      const targetCamY = player.y - (logicalH / camera.scale) * vOffset;
       camera.x += (targetCamX - camera.x) * 7 * rawDt;
       camera.y += (targetCamY - camera.y) * 5 * rawDt;
 
@@ -2679,9 +2697,11 @@
     const logicalW = window.innerWidth;
     const logicalH = window.innerHeight;
     const isPortrait = logicalH > logicalW;
-    const leadFactor = isPortrait ? 0.17 : 0.22;
+    const isMobileLandscape = (!isPortrait && logicalH <= 520);
+    const leadFactor = isPortrait ? 0.17 : (isMobileLandscape ? 0.28 : 0.22);
+    const vOffset = isPortrait ? 0.62 : (isMobileLandscape ? 0.58 : 0.54);
     const targetCamX = player.x - (logicalW / camera.scale) * leadFactor;
-    const targetCamY = player.y - (logicalH / camera.scale) * (isPortrait ? 0.62 : 0.54);
+    const targetCamY = player.y - (logicalH / camera.scale) * vOffset;
 
     camera.x += (targetCamX - camera.x) * 7 * rawDt;
     camera.y += (targetCamY - camera.y) * 5 * rawDt;
@@ -2840,40 +2860,52 @@
   }
   requestAnimationFrame(gameLoop);
 
-  // --- 12. BUTTON & MODAL EVENTS (SOFORT-REAKTION AUF TOUCH & CLICK) ---
+  // --- 12. BUTTON & MODAL EVENTS (SOFORT-REAKTION AUF TOUCH & CLICK OHNE 300MS LAG) ---
+  function bindFastClick(el, handler) {
+    if (!el) return;
+    el.addEventListener("click", handler);
+    el.addEventListener("touchend", (e) => {
+      if (typeof e.preventDefault === "function") e.preventDefault();
+      handler(e);
+    }, { passive: false });
+  }
+
   function startExpedition(e) {
-    if (e && typeof e.preventDefault === "function") e.preventDefault();
     if (e && typeof e.stopPropagation === "function") e.stopPropagation();
-    if (isPlaying) return;
-    startMenu.style.display = "none";
+    // 1. Zuerst Audio aktivieren, solange die direkte Nutzer-Interaktion im Callstack aktiv ist!
     jungleAudio.init();
     try {
       jungleAudio.playMusic();
     } catch (err) {}
+
+    // 2. Startmenü schließen & Spiel starten
+    if (isPlaying) return;
+    startMenu.style.display = "none";
     resetGame(true);
   }
 
-  btnStartGame.addEventListener("click", startExpedition);
-  btnStartGame.addEventListener("pointerdown", startExpedition);
-  btnStartGame.addEventListener("touchend", startExpedition);
+  // W3C-Standard-Aktivierung: touchend & click für verlässliches Audio-Unmuting auf GitHub Pages & iOS
+  bindFastClick(btnStartGame, startExpedition);
 
   function retryCheckpoint(e) {
-    if (e && typeof e.preventDefault === "function") e.preventDefault();
     if (e && typeof e.stopPropagation === "function") e.stopPropagation();
+    jungleAudio.init();
+    if (jungleAudio.musicEnabled && jungleAudio.bgMusic && jungleAudio.bgMusic.paused) {
+      jungleAudio.playMusic();
+    }
     resetGame(false);
   }
-  btnRetry.addEventListener("click", retryCheckpoint);
-  btnRetry.addEventListener("pointerdown", retryCheckpoint);
-  btnRetry.addEventListener("touchend", retryCheckpoint);
+  bindFastClick(btnRetry, retryCheckpoint);
 
   function restartFromZero(e) {
-    if (e && typeof e.preventDefault === "function") e.preventDefault();
     if (e && typeof e.stopPropagation === "function") e.stopPropagation();
+    jungleAudio.init();
+    if (jungleAudio.musicEnabled && jungleAudio.bgMusic && jungleAudio.bgMusic.paused) {
+      jungleAudio.playMusic();
+    }
     resetGame(true);
   }
-  btnRestartZero.addEventListener("click", restartFromZero);
-  btnRestartZero.addEventListener("pointerdown", restartFromZero);
-  btnRestartZero.addEventListener("touchend", restartFromZero);
+  bindFastClick(btnRestartZero, restartFromZero);
 
   // --- 13. INTERAKTIVES 3D MAYA-KRYPTEX & GEOCACHING FINISHER-STEMPEL ---
   function updateCryptexUI() {
@@ -3148,16 +3180,7 @@
       }, 400);
   }
 
-  // Kryptex Events (Sofortige Touch- & Klick-Reaktion ohne 300ms Verzögerung)
-  function bindFastClick(el, handler) {
-    if (!el) return;
-    el.addEventListener("click", handler);
-    el.addEventListener("touchend", (e) => {
-      if (typeof e.preventDefault === "function") e.preventDefault();
-      handler(e);
-    }, { passive: false });
-  }
-
+  // Kryptex Events
   for (let r = 0; r < 3; r++) {
     const ringEl = document.getElementById(`ring-${r}`);
     if (ringEl) {

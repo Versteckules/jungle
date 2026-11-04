@@ -13,8 +13,10 @@
 
 <body>
 
-  <!-- Hintergrund-Musik Audio -->
-  <audio id="bg-music" src="music.mp3" loop preload="auto"></audio>
+  <!-- Hintergrund-Musik Audio (GitHub Pages, Safari & Mobile Autoplay-kompatibel) -->
+  <audio id="bg-music" src="music.mp3" loop preload="auto" playsinline webkit-playsinline>
+    <source src="music.mp3" type="audio/mpeg">
+  </audio>
 
   <!-- AVATARE ALS TRANSPARENTE SILHOUETTEN ZENTRIERT IM HINTERGRUND -->
   <div id="guardian-watermarks">

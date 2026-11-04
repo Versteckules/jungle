@@ -9,6 +9,12 @@ class JungleAudioEngine {
     this.bgMusic = document.getElementById("bg-music");
     this.musicToggleBtn = document.getElementById("music-toggle");
     this._lastClack = 0;
+    this._unlockerArmed = false;
+
+    if (this.bgMusic) {
+      this.bgMusic.volume = 0.75;
+      try { this.bgMusic.load(); } catch (e) {}
+    }
 
     if (this.musicToggleBtn) {
       this.updateBtnText();
@@ -21,6 +27,44 @@ class JungleAudioEngine {
       this.musicToggleBtn.addEventListener("touchend", handleToggle, { passive: false });
       window.addEventListener("resize", () => this.updateBtnText());
     }
+
+    // Sofortiger Autoplay-Unlocker für GitHub Pages / HTTPS / iOS Safari
+    this.armAutoplayUnlocker();
+  }
+
+  armAutoplayUnlocker() {
+    if (this._unlockerArmed) return;
+    this._unlockerArmed = true;
+
+    const unlock = () => {
+      this.init();
+      if (this.musicEnabled && this.bgMusic && this.bgMusic.paused) {
+        try {
+          const p = this.bgMusic.play();
+          if (p && typeof p.then === "function") {
+            p.then(() => {
+              this.updateBtnText();
+              cleanup();
+            }).catch(() => {});
+          }
+        } catch (e) {}
+      } else if (this.bgMusic && !this.bgMusic.paused) {
+        cleanup();
+      }
+    };
+
+    const cleanup = () => {
+      this._unlockerArmed = false;
+      window.removeEventListener("pointerdown", unlock, true);
+      window.removeEventListener("touchend", unlock, true);
+      window.removeEventListener("click", unlock, true);
+      window.removeEventListener("keydown", unlock, true);
+    };
+
+    window.addEventListener("pointerdown", unlock, true);
+    window.addEventListener("touchend", unlock, true);
+    window.addEventListener("click", unlock, true);
+    window.addEventListener("keydown", unlock, true);
   }
 
   updateBtnText() {
@@ -44,27 +88,52 @@ class JungleAudioEngine {
       }
     }
     if (this.audioCtx && this.audioCtx.state === "suspended") {
-      this.audioCtx.resume();
+      this.audioCtx.resume().catch(() => {});
+    }
+    if (this.bgMusic && this.bgMusic.readyState === 0) {
+      try { this.bgMusic.load(); } catch (e) {}
     }
   }
 
   toggleMusic() {
     this.init();
+    // Falls Musik an sein soll, aber der Browser sie blockiert hat (bgMusic.paused):
+    // Klick auf den Button startet sie sofort, statt sie abzuschalten!
+    if (this.musicEnabled && this.bgMusic && this.bgMusic.paused) {
+      this.playMusic();
+      this.updateBtnText();
+      return;
+    }
+
     this.musicEnabled = !this.musicEnabled;
     this.updateBtnText();
     if (this.musicEnabled) {
-      if (this.bgMusic) this.bgMusic.play().catch(() => {});
+      this.playMusic();
     } else {
       if (this.bgMusic) this.bgMusic.pause();
     }
   }
 
   playMusic() {
-    if (this.musicEnabled && this.bgMusic && typeof this.bgMusic.play === "function") {
+    if (!this.musicEnabled) return;
+    this.init();
+    if (this.bgMusic && typeof this.bgMusic.play === "function") {
       try {
+        if (this.bgMusic.readyState === 0) {
+          try { this.bgMusic.load(); } catch (e) {}
+        }
         const p = this.bgMusic.play();
-        if (p && typeof p.catch === "function") p.catch(() => {});
-      } catch (e) {}
+        if (p && typeof p.then === "function") {
+          p.then(() => {
+            this.updateBtnText();
+          }).catch((err) => {
+            // Autoplay vom Browser (noch) abgelehnt -> Unlocker aktivieren
+            this.armAutoplayUnlocker();
+          });
+        }
+      } catch (e) {
+        this.armAutoplayUnlocker();
+      }
     }
   }
 

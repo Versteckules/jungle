@@ -681,6 +681,144 @@ canvas#game {
 }
 
 /* ==========================================================================
+   HANDY-QUERFORMAT (MOBILE LANDSCAPE: Höhe <= 520px, z.B. iPhone, Galaxy, Pixel)
+   Schlanke 1-Zeilen-Leiste & 100% überlappungsfrei
+   ========================================================================== */
+@media (orientation: landscape) and (max-height: 520px), (max-width: 950px) and (max-height: 520px) {
+  #top-left-hud {
+    top: max(4px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 6px;
+  }
+  #top-left-hud .hud-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+  }
+  #music-toggle {
+    padding: 2px 7px;
+    font-size: 10px;
+    border-radius: 10px;
+  }
+  #lives-hud {
+    padding: 2px 6px;
+    gap: 2px;
+  }
+  .heart-icon {
+    font-size: 12px;
+  }
+  #combo-hud {
+    padding: 1px 4px;
+    gap: 2px;
+  }
+  .combo-badge {
+    font-size: 8px;
+    padding: 0 3px;
+  }
+  .combo-bar-wrap {
+    width: 24px;
+    height: 4px;
+  }
+
+  /* Schlanke Boost-Leiste exakt im Zentrum */
+  #boost-hud {
+    top: max(4px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(100px, 16vw, 130px);
+    gap: 1px;
+  }
+  #boost-title {
+    font-size: 7.5px;
+    letter-spacing: 0.4px;
+  }
+  #boost-bar-outer {
+    height: 7px;
+    border-radius: 4px;
+  }
+  #boost-badge {
+    display: none !important;
+  }
+
+  /* Schlankes 1-Zeilen Distanz-, Bananen- und Relikt-HUD rechts */
+  #distance-hud {
+    top: max(4px, env(safe-area-inset-top));
+    right: max(8px, env(safe-area-inset-right));
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 5px;
+  }
+  #dist-counter {
+    font-size: 12px;
+    padding: 1px 6px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(250, 204, 21, 0.4);
+    border-radius: 10px;
+    margin: 0;
+  }
+  #dist-counter span {
+    font-size: 8.5px;
+  }
+  .hud-stats-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+  #score-counter-hud {
+    font-size: 9.5px;
+    padding: 1px 5px;
+    border-radius: 10px;
+  }
+  #banana-counter-hud {
+    font-size: 9.5px;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+  #relics-hud {
+    padding: 1px 4px;
+    gap: 2px;
+    border-radius: 10px;
+  }
+  .relic-badge {
+    font-size: 10px;
+  }
+  #zone-badge {
+    display: none !important; /* Im Querformat ausgeblendet für 100% flaches 1-Zeilen-Layout */
+  }
+
+  /* Steuerungs-Hinweis dezent und flach am unteren Displayrand */
+  #mobile-hint {
+    font-size: 8.5px;
+    padding: 2px 8px;
+    opacity: 0.65;
+    bottom: max(4px, env(safe-area-inset-bottom));
+  }
+
+  /* Action Popups & Banner im Querformat proportional skalieren */
+  #action-popup {
+    top: 22%;
+    font-size: clamp(12px, 3.2vw, 18px);
+  }
+  #zone-banner {
+    top: 22%;
+    padding: 8px 16px;
+    width: min(80vw, 360px);
+  }
+  #zone-banner-title {
+    font-size: 16px;
+  }
+  #zone-banner-sub {
+    font-size: 10.5px;
+  }
+}
+
+/* ==========================================================================
    STARTMENÜ & MODALS
    ========================================================================== */
 
