@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Jungle Hero - Versteckules &amp; Tschango</title>
+
+  <!-- Modular Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- Hintergrund-Musik Audio -->
+  <audio id="bg-music" src="music.mp3" loop preload="auto"></audio>
+
+  <!-- AVATARE ALS TRANSPARENTE SILHOUETTEN ZENTRIERT IM HINTERGRUND -->
+  <div id="guardian-watermarks">
+    <div class="guardian-wrapper">
+      <div class="guardian-silhouette">
+        <img src="avatar_silhouette.png" alt="Versteckules">
+      </div>
+    </div>
+    <div class="guardian-wrapper">
+      <div class="guardian-silhouette tschango">
+        <img src="tschango_silhouette.png" alt="Tschango">
+      </div>
+    </div>
+  </div>
+
+  <!-- Startmenü Overlay -->
+  <div id="start-menu">
+    <div class="start-content-wrapper">
+      <div class="gc-hero-badge">
+        <span>🧭</span>
+        <span>OFFIZIELLER GEOCACHE:</span>
+        <span class="gc-code-pill">GCC04PH</span>
+        <span style="color:#facc15;font-weight:900;">• JUNGLE HERO</span>
+      </div>
+
+      <div class="avatar-stage">
+        <div class="hero-card hero-versteckules">
+          <div class="hero-card-inner">
+            <div class="hero-frame">
+              <img src="Avatar.jpg" alt="Versteckules">
+            </div>
+            <div class="hero-tag">
+              <span class="hero-name">VERSTECKULES</span>
+              <span class="hero-role">Jungle Explorer</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-divider">
+          <span>&amp;</span>
+        </div>
+
+        <div class="hero-card hero-tschango">
+          <div class="hero-card-inner">
+            <div class="hero-frame">
+              <img src="tschango.jpg" alt="Tschango">
+            </div>
+            <div class="hero-tag">
+              <span class="hero-name">TSCHANGO</span>
+              <span class="hero-role">Tribal Chieftain</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="start-info-group">
+        <h1>Jungle Hero</h1>
+        <p class="subtitle">made by versteckules &amp; tschango &bull; <span class="gc-code-inline">GC-Code: <b>GCC04PH</b></span></p>
+
+        <div class="mission-brief">
+          🌴 <b>KNACKIGE 3.000m DSCHUNGEL-EXPEDITION</b> zum Maya-Sonnentempel!<br>
+          👆 <b>1x Tippen:</b> Sprung, Liane, Seilbahn &amp; Kanone &bull; 🤸 <b>2x Tippen:</b> Doppel-Salto &bull; 💖 <b>Skill-Herzen auf Baumkronen</b>
+        </div>
+
+        <button id="btn-start-game" type="button">🚀 Expedition Starten! 🌴</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Haupt-Container mit HUD & Canvas -->
+  <div class="container">
+    <!-- Top-Left: Musik, Leben & K-O-K-O Buchstaben -->
+    <div id="top-left-hud">
+      <div class="hud-row">
+        <button id="music-toggle" type="button">🎵 Musik: ON</button>
+        <div id="lives-hud">
+          <span class="heart-icon" id="heart-1">💖</span>
+          <span class="heart-icon" id="heart-2">💖</span>
+          <span class="heart-icon" id="heart-3">💖</span>
+        </div>
+      </div>
+      <div class="hud-sub-row">
+        <div id="koko-hud" title="K-O-K-O Buchstaben sammeln für Gold-Koko!">
+          <span class="koko-badge locked" id="koko-0">K</span>
+          <span class="koko-badge locked" id="koko-1">O</span>
+          <span class="koko-badge locked" id="koko-2">K</span>
+          <span class="koko-badge locked" id="koko-3">O</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top-Center: Speed- & Bananen-Boost Gauge + COMBO MULTIPLIER -->
+    <div id="boost-hud">
+      <div class="boost-top-line">
+        <div id="boost-title">⚡ BANANEN-BOOST</div>
+        <div id="combo-hud" class="combo-hud">
+          <span id="combo-badge" class="combo-badge">x1</span>
+          <div class="combo-bar-wrap"><div id="combo-bar-fill"></div></div>
+        </div>
+      </div>
+      <div id="boost-bar-outer">
+        <div id="boost-bar-fill"></div>
+      </div>
+      <div id="boost-badge">SUPER-SONIC FRENZY! 🔥</div>
+    </div>
+
+    <!-- Top-Right: Distanz, Score, Bananen, Relikte & Zone -->
+    <div id="distance-hud">
+      <div id="dist-counter">0 <span>/ 3000 m</span></div>
+      <div class="hud-stats-row">
+        <div id="score-counter-hud">⭐ <span id="score-count">0</span></div>
+        <div id="banana-counter-hud">🍌 <span id="banana-count">0</span></div>
+        <div id="relics-hud" title="3 Versteckte Autoren-Relikte">
+          <span id="relic-hud-helmet" class="relic-badge locked" title="Versteckules' Tropenhelm (520m)">🪖</span>
+          <span id="relic-hud-amulet" class="relic-badge locked" title="Tschangos Sonnen-Amulett (1450m)">🧿</span>
+          <span id="relic-hud-hook" class="relic-badge locked" title="Heiliger Angelhaken (2280m)">🪝</span>
+        </div>
+      </div>
+      <div id="zone-badge">🌅 ZONE 1: SONNEN-URWALD</div>
+    </div>
+
+    <!-- Zonen-Übergangs Banner -->
+    <div id="zone-banner">
+      <div id="zone-banner-title">🌴 ZONE 1 🌴</div>
+      <div id="zone-banner-sub">Aufbruch in den Urwald</div>
+    </div>
+
+    <!-- Action Popup (Feedback) -->
+    <div id="action-popup">TIKI-BOOM! 🛢️🔥</div>
+
+    <!-- Mobile Hint (One-Button Steuerung) -->
+    <div id="mobile-hint">
+      👆 <b>1x TIPPEN</b> = SPRUNG / LIANE / KANONE • 🤸 <b>2x TIPPEN</b> = DOPPEL-SALTO
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal">
+      <div class="modal-card">
+        <h2 class="modal-title">💀 EXPEDITION GESCHEITERT</h2>
+        <p class="modal-desc" id="game-over-desc">
+          Alle 3 Herzen aufgebraucht! Der dichte Dschungel war unbarmherzig.
+        </p>
+        <button id="btn-retry" class="btn-modal" type="button">🔄 Am Zonen-Checkpoint neu starten</button>
+        <button id="btn-restart-zero" class="btn-modal" style="background:#475569;margin-top:6px;" type="button">🌴 Von
+          0m beginnen</button>
+      </div>
+    </div>
+
+    <!-- Victory Modal mit Interaktivem Maya-Kryptex & Offiziellem Finisher-Stempel -->
+    <div id="victory-popup">
+      <div class="modal-card modal-card-victory">
+        
+        <!-- PHASE 1: INTERAKTIVER MAYA-KRYPTEX ZYLINDER -->
+        <div id="cryptex-stage">
+          <div class="cryptex-header">
+            <span class="cryptex-eye">☀️</span>
+            <h2 class="modal-title" style="color:#facc15;">ALTAR DER GÖTTER</h2>
+            <p class="modal-desc" style="max-width:380px;">
+              Du hast die 3.000 Meter Dschungel bezwungen! Vor dir ragt das heilige Maya-Kryptex. Entschlüssele die 3 Steinringe, um die Koordinaten zu befreien:
+            </p>
+          </div>
+
+          <div class="cryptex-cylinder">
+            <div class="cryptex-ring" id="ring-0" data-ring="0">
+              <button class="ring-btn btn-up" type="button" aria-label="Ring 1 nach oben">▲</button>
+              <div class="ring-viewport">
+                <div class="glyph-item glyph-prev">🐆</div>
+                <div class="glyph-item glyph-cur">☀️</div>
+                <div class="glyph-item glyph-next">🐒</div>
+              </div>
+              <button class="ring-btn btn-down" type="button" aria-label="Ring 1 nach unten">▼</button>
+            </div>
+
+            <div class="cryptex-ring" id="ring-1" data-ring="1">
+              <button class="ring-btn btn-up" type="button" aria-label="Ring 2 nach oben">▲</button>
+              <div class="ring-viewport">
+                <div class="glyph-item glyph-prev">🐍</div>
+                <div class="glyph-item glyph-cur">🐒</div>
+                <div class="glyph-item glyph-next">🦅</div>
+              </div>
+              <button class="ring-btn btn-down" type="button" aria-label="Ring 2 nach unten">▼</button>
+            </div>
+
+            <div class="cryptex-ring" id="ring-2" data-ring="2">
+              <button class="ring-btn btn-up" type="button" aria-label="Ring 3 nach oben">▲</button>
+              <div class="ring-viewport">
+                <div class="glyph-item glyph-prev">🏛️</div>
+                <div class="glyph-item glyph-cur">🐆</div>
+                <div class="glyph-item glyph-next">☀️</div>
+              </div>
+              <button class="ring-btn btn-down" type="button" aria-label="Ring 3 nach unten">▼</button>
+            </div>
+          </div>
+
+          <p class="cryptex-hint">👆 Tippe auf die Pfeile oder Ringe zum Drehen</p>
+          <button id="btn-unlock-cryptex" class="btn-modal btn-altar-pulse" type="button">⚡ KRYPTEX ENTSCHLÜSSELN ⚡</button>
+        </div>
+
+        <!-- PHASE 2: GEHEIME FINAL-KOORDINATEN & OFFIZIELLER STEMPEL (ERSCHEINT NACH ENTSCHLÜSSELUNG) -->
+        <div id="cryptex-reveal" style="display:none;">
+          <h2 class="modal-title" style="color:#4ade80;">🔓 KRYPTEX ENTSCHLÜSSELT!</h2>
+          <p class="modal-desc">
+            Die antiken Steinscheiben rasten ein! Der Maya-Sonnentempel gibt sein Geheimnis preis:
+          </p>
+
+          <div class="coords-box" id="final-coords">N 50° 09.715 E 012° 07.591</div>
+          
+          <div class="hint-box" style="margin-top:10px;background:rgba(234, 179, 8, 0.18);border:2px solid #facc15;border-radius:12px;padding:10px 14px;text-align:center;">
+            <span style="font-size:14px;display:block;margin-bottom:2px;color:#facc15;font-weight:900;">🎣
+              OFFIZIELLER GEOCACHE-HINWEIS:</span>
+            <span style="font-size:24px;font-weight:900;color:#fef08a;letter-spacing:2px;">"Angeln"</span>
+            <p style="margin:2px 0 0 0;font-size:11px;color:#cbd5e1;">(Spezial-Ausrüstung vor Ort erforderlich)</p>
+          </div>
+
+          <button id="btn-copy-coords" class="btn-modal" style="margin-top:10px;" type="button">📋 Koordinaten &amp; Angel-Tipp kopieren</button>
+
+          <!-- DER OFFIZIELLE GEOCACHING FINISHER-STEMPEL (FÜR DEN LOG-EINTRAG) -->
+          <div class="finisher-stamp-card" id="finisher-stamp">
+            <div class="stamp-seal">⭐ OFFIZIELLER GEOCACHE FINISHER-STEMPEL • GCC04PH ⭐</div>
+            
+            <div class="avatar-stage" style="margin:6px 0;gap:12px;">
+              <div class="hero-card hero-versteckules">
+                <div class="hero-card-inner" style="padding:4px;border-radius:14px;">
+                  <div class="hero-frame" style="width:62px;height:72px;border-radius:10px;padding:3px;">
+                    <img src="Avatar.jpg" alt="Versteckules">
+                  </div>
+                  <div class="hero-tag" style="margin-top:2px;">
+                    <span class="hero-name" style="font-size:9px;">VERSTECKULES</span>
+                  </div>
+                </div>
+              </div>
+              <div class="hero-divider">
+                <span style="font-size:16px;">&amp;</span>
+              </div>
+              <div class="hero-card hero-tschango">
+                <div class="hero-card-inner" style="padding:4px;border-radius:14px;">
+                  <div class="hero-frame" style="width:62px;height:72px;border-radius:10px;padding:3px;">
+                    <img src="tschango.jpg" alt="Tschango">
+                  </div>
+                  <div class="hero-tag" style="margin-top:2px;">
+                    <span class="hero-name" style="font-size:9px;">TSCHANGO</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stamp-rank-banner" id="stamp-rank">🌟 MEISTER-GEOCACHER DER MAYA 🌟</div>
+
+            <div class="stamp-relics-list" id="stamp-relics-list">
+              <span class="stamp-relic-tag" id="stamp-relic-1">🪖 Tropenhelm</span>
+              <span class="stamp-relic-tag" id="stamp-relic-2">🧿 Sonnen-Amulett</span>
+              <span class="stamp-relic-tag" id="stamp-relic-3">🪝 Angelhaken</span>
+            </div>
+
+            <div class="stamp-stats-bar">
+              <div class="stat-cell">Score: <b id="stamp-score" style="color:#facc15;">0</b></div>
+              <div class="stat-cell">Bananen: <b id="stamp-bananas">0</b></div>
+              <div class="stat-cell">K-O-K-O: <b id="stamp-koko" style="color:#38bdf8;">0 / 4</b></div>
+              <div class="stat-cell">Relikte: <b id="stamp-relic-count">3 / 3</b></div>
+            </div>
+
+            <div class="stamp-koko-seal" id="stamp-koko-seal" style="display:none;background:linear-gradient(90deg,#eab308,#facc15);color:#1e0a02;font-size:10px;font-weight:900;padding:4px 8px;border-radius:8px;margin-top:5px;text-align:center;">
+              🌟 100% K-O-K-O MEISTER – GOLD-KOKO FREIGESCHALTET! 🌟
+            </div>
+
+            <div class="stamp-screenshot-notice">
+              📸 <b>Tipp für Geocacher:</b> Screenshot dieses Stempels im Log auf Geocaching.com beifügen!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="game"></canvas>
+  </div>
+
+  <!-- Modulare Game Engine Scripts -->
+  <script src="js/constants.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/graphics.js"></script>
+  <script src="js/game.js"></script>
+</body>
+
+</html>
