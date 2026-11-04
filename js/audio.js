@@ -12,19 +12,17 @@ class JungleAudioEngine {
     this._unlockerArmed = false;
 
     if (this.bgMusic) {
-      this.bgMusic.volume = 0.75;
-      try { this.bgMusic.load(); } catch (e) {}
+      this.bgMusic.volume = 0.8;
     }
 
     if (this.musicToggleBtn) {
       this.updateBtnText();
       const handleToggle = (e) => {
-        if (e && typeof e.preventDefault === "function") e.preventDefault();
         if (e && typeof e.stopPropagation === "function") e.stopPropagation();
         this.toggleMusic();
       };
       this.musicToggleBtn.addEventListener("click", handleToggle);
-      this.musicToggleBtn.addEventListener("touchend", handleToggle, { passive: false });
+      this.musicToggleBtn.addEventListener("touchend", handleToggle);
       window.addEventListener("resize", () => this.updateBtnText());
     }
 
@@ -41,7 +39,7 @@ class JungleAudioEngine {
       if (this.musicEnabled && this.bgMusic && this.bgMusic.paused) {
         try {
           const p = this.bgMusic.play();
-          if (p && typeof p.then === "function") {
+          if (p !== undefined && typeof p.then === "function") {
             p.then(() => {
               this.updateBtnText();
               cleanup();
@@ -90,9 +88,6 @@ class JungleAudioEngine {
     if (this.audioCtx && this.audioCtx.state === "suspended") {
       this.audioCtx.resume().catch(() => {});
     }
-    if (this.bgMusic && this.bgMusic.readyState === 0) {
-      try { this.bgMusic.load(); } catch (e) {}
-    }
   }
 
   toggleMusic() {
@@ -119,15 +114,12 @@ class JungleAudioEngine {
     this.init();
     if (this.bgMusic && typeof this.bgMusic.play === "function") {
       try {
-        if (this.bgMusic.readyState === 0) {
-          try { this.bgMusic.load(); } catch (e) {}
-        }
         const p = this.bgMusic.play();
-        if (p && typeof p.then === "function") {
+        if (p !== undefined && typeof p.then === "function") {
           p.then(() => {
             this.updateBtnText();
           }).catch((err) => {
-            // Autoplay vom Browser (noch) abgelehnt -> Unlocker aktivieren
+            console.warn("Autoplay / Music playback deferred:", err);
             this.armAutoplayUnlocker();
           });
         }

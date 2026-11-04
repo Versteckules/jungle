@@ -230,10 +230,11 @@
       const targetVisibleW = 780;
       camera.scale = Math.min(1.0, logicalW / targetVisibleW);
     } else if (logicalH <= 520) {
-      // Handy-Querformat (Mobile Landscape): Großzügiges Dschungel-Panorama (ca. 35-40% weiter herausgezoomt)
-      // Ziel: ca. 560px - 580px sichtbare Welthöhe für ideale Arcade-Proportionen & maximale Reaktionszeit!
-      const targetVisibleH = 570;
-      camera.scale = Math.min(0.72, Math.max(0.52, logicalH / targetVisibleH));
+      // Handy-Querformat (Mobile Landscape):
+      // Exakt selbe harmonische Zoomstufe wie im Hochformat (scale ~0.46 - 0.50)
+      // Riesige 16:9 Weitsicht mit viel Platz nach oben und massig Vorausschau!
+      const targetVisibleH = 800;
+      camera.scale = Math.min(0.50, Math.max(0.44, logicalH / targetVisibleH));
     } else {
       // Querformat (Desktop / Tablet): Breites Sichtfeld für maximale Voraussicht
       const targetVisibleW = Math.max(900, logicalW * 0.95);
@@ -1266,8 +1267,8 @@
     const logicalH = window.innerHeight;
     const isPortrait = logicalH > logicalW;
     const isMobileLandscape = (!isPortrait && logicalH <= 520);
-    const leadFactor = isPortrait ? 0.17 : (isMobileLandscape ? 0.28 : 0.22);
-    const vOffset = isPortrait ? 0.62 : (isMobileLandscape ? 0.58 : 0.54);
+    const leadFactor = isPortrait ? 0.17 : 0.22;
+    const vOffset = isPortrait ? 0.62 : (isMobileLandscape ? 0.55 : 0.54);
     camera.x = player.x - (logicalW / camera.scale) * leadFactor;
     camera.y = player.y - (logicalH / camera.scale) * vOffset;
     camera.shake = 0;
@@ -1502,6 +1503,11 @@
 
   window.addEventListener("pointerup", endTouch);
   window.addEventListener("pointercancel", endTouch);
+  window.addEventListener("touchend", () => {
+    if (jungleAudio.musicEnabled && jungleAudio.bgMusic && jungleAudio.bgMusic.paused) {
+      jungleAudio.playMusic();
+    }
+  }, { passive: true });
 
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space" || e.code === "ArrowUp" || e.code === "Enter") {
@@ -2698,8 +2704,8 @@
     const logicalH = window.innerHeight;
     const isPortrait = logicalH > logicalW;
     const isMobileLandscape = (!isPortrait && logicalH <= 520);
-    const leadFactor = isPortrait ? 0.17 : (isMobileLandscape ? 0.28 : 0.22);
-    const vOffset = isPortrait ? 0.62 : (isMobileLandscape ? 0.58 : 0.54);
+    const leadFactor = isPortrait ? 0.17 : 0.22;
+    const vOffset = isPortrait ? 0.62 : (isMobileLandscape ? 0.55 : 0.54);
     const targetCamX = player.x - (logicalW / camera.scale) * leadFactor;
     const targetCamY = player.y - (logicalH / camera.scale) * vOffset;
 
@@ -2884,8 +2890,9 @@
     resetGame(true);
   }
 
-  // W3C-Standard-Aktivierung: touchend & click für verlässliches Audio-Unmuting auf GitHub Pages & iOS
-  bindFastClick(btnStartGame, startExpedition);
+  // Direkte native Event-Aktivierung für verlässlichen Audio-Start auf mobilen Browsern & GitHub Pages
+  btnStartGame.addEventListener("click", startExpedition);
+  btnStartGame.addEventListener("touchend", startExpedition);
 
   function retryCheckpoint(e) {
     if (e && typeof e.stopPropagation === "function") e.stopPropagation();
